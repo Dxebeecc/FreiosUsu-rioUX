@@ -3,151 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acervo de Ferramentas</title>
+    <title>Acervo de Ferramentas Pro</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        latam: {
+                            blue: '#1B1464',
+                            purple: '#7B2068',
+                            pink: '#E3004F',
+                            bg: '#0A0F1C',
+                            surface: '#131A2D',
+                            border: '#232D45'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
     <style>
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0A0F1C; }
+        ::-webkit-scrollbar-thumb { background: #232D45; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #7B2068; }
         [x-cloak] { display: none !important; }
         
-        .card-folder { transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease; cursor: pointer; }
-        .card-folder:hover { transform: translateY(-2px); border-color: #3b82f6; background-color: #1e293b; }
+        .glass-panel {
+            background: rgba(19, 26, 45, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
         
-        .card-tool { transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
-        .card-tool:hover { transform: translateY(-4px); border-color: #3b82f6; box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.4); }
+        .tile-hover { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .tile-hover:hover { transform: translateY(-2px); border-color: #7B2068; background-color: rgba(35, 45, 69, 0.8); }
+        
+        .list-item-hover { transition: all 0.2s ease; }
+        .list-item-hover:hover { background-color: rgba(255, 255, 255, 0.03); border-color: #7B2068; }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen flex flex-col" x-data="setupApp()">
+<body class="bg-latam-bg text-gray-200 font-sans antialiased min-h-screen flex flex-col selection:bg-latam-pink selection:text-white" x-data="setupApp()">
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-grow">
-        <header class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-6">
-            <div>
-                <h1 class="text-3xl font-bold text-white tracking-tight">Acervo de Ferramentas</h1>
-                <p class="text-gray-400 mt-1">Gestão customizada de fluxos e inventário</p>
+    <header class="glass-panel sticky top-0 z-50 border-b border-latam-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-latam-blue via-latam-purple to-latam-pink flex items-center justify-center shadow-lg shadow-latam-purple/20">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white tracking-wide">Acervo de Ferramentas</h1>
+                    <p class="text-[10px] uppercase tracking-widest text-gray-400 font-semibold bg-clip-text text-transparent bg-gradient-to-r from-latam-purple to-latam-pink">Gestão de Inventário</p>
+                </div>
             </div>
             
-            <div class="relative w-full md:w-96 flex items-center">
-                <input type="text" x-model="searchQuery" placeholder="Buscar por nome ou código..." 
-                       class="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-4 pl-10 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm">
-                <svg class="w-5 h-5 absolute left-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                <button x-show="isSearching" @click="searchQuery = ''" class="absolute right-3 text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-full p-1 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            <div class="relative w-full md:w-[400px]">
+                <input type="text" x-model="searchQuery" placeholder="Buscar ferramenta ou P/N..." 
+                       class="w-full bg-latam-bg border border-latam-border rounded-full py-2.5 px-5 pl-11 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-latam-purple focus:ring-1 focus:ring-latam-purple transition-all">
+                <svg class="w-4 h-4 absolute left-4 top-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <button x-show="isSearching" @click="searchQuery = ''" class="absolute right-2 top-2 text-gray-400 hover:text-white bg-latam-surface rounded-full p-1.5 transition-colors">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <div x-cloak x-show="!isLoading && !isSearching" class="mb-8 bg-gray-800/40 p-3 rounded-lg border border-gray-700/50 w-fit inline-flex items-center space-x-2 text-sm font-medium overflow-x-auto max-w-full">
-            <button @click="goToLevel(0)" class="flex items-center text-gray-400 hover:text-blue-400 transition-colors whitespace-nowrap">
-                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow">
+        
+        <div x-cloak x-show="!isLoading && !isSearching" class="mb-6 flex items-center space-x-1 overflow-x-auto pb-2 scrollbar-hide text-xs font-semibold uppercase tracking-wider">
+            <button @click="goToLevel(0)" class="flex items-center px-3 py-1.5 rounded-full bg-latam-surface border border-latam-border text-gray-400 hover:text-white hover:border-latam-purple transition-colors whitespace-nowrap">
                 Início
             </button>
             
             <template x-if="selectedCat">
-                <div class="flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                    <button @click="goToLevel(1, selectedCat)" class="text-gray-400 hover:text-blue-400 transition-colors capitalize whitespace-nowrap" x-text="selectedCat"></button>
+                <div class="flex items-center">
+                    <svg class="w-4 h-4 text-gray-600 mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <button @click="goToLevel(1, selectedCat)" class="px-3 py-1.5 rounded-full bg-latam-surface border border-latam-border text-gray-400 hover:text-white hover:border-latam-purple transition-colors whitespace-nowrap" x-text="selectedCat"></button>
                 </div>
             </template>
             
             <template x-if="selectedLoc">
-                <div class="flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                    <button @click="goToLevel(2, selectedCat, selectedLoc)" class="text-gray-400 hover:text-blue-400 transition-colors whitespace-nowrap" x-text="selectedLoc"></button>
+                <div class="flex items-center">
+                    <svg class="w-4 h-4 text-gray-600 mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <button @click="goToLevel(2, selectedCat, selectedLoc)" class="px-3 py-1.5 rounded-full bg-latam-surface border border-latam-border text-gray-400 hover:text-white hover:border-latam-purple transition-colors whitespace-nowrap" x-text="selectedLoc"></button>
                 </div>
             </template>
             
             <template x-if="selectedSub">
-                <div class="flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                    <span class="text-gray-100 whitespace-nowrap" x-text="selectedSub"></span>
+                <div class="flex items-center">
+                    <svg class="w-4 h-4 text-gray-600 mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span class="px-3 py-1.5 rounded-full bg-gradient-to-r from-latam-purple/20 to-latam-pink/20 border border-latam-pink/30 text-latam-pink whitespace-nowrap" x-text="selectedSub"></span>
                 </div>
             </template>
         </div>
 
-        <div x-cloak x-show="isSearching" class="mb-6 bg-blue-900/20 border border-blue-800/60 p-4 rounded-lg flex items-center justify-between animate-fadeIn">
-            <span class="text-blue-400 font-medium">
-                Resultados encontrados para: <span class="text-white font-bold tracking-wide" x-text="searchQuery"></span>
+        <div x-cloak x-show="isSearching" class="mb-6 bg-gradient-to-r from-latam-blue/30 to-latam-purple/30 border border-latam-purple/40 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+            <span class="text-gray-300 text-sm">
+                Buscando por: <span class="text-white font-bold text-base" x-text="searchQuery"></span>
             </span>
-            <span class="text-xs font-bold bg-blue-600 text-white px-2 py-1 rounded shadow" x-text="searchResults.length + ' itens'"></span>
+            <span class="text-xs font-bold bg-latam-pink text-white px-3 py-1.5 rounded-full shadow-md uppercase tracking-wider" x-text="searchResults.length + ' resultados'"></span>
         </div>
 
-        <div x-show="isLoading" class="flex flex-col items-center justify-center py-24">
-            <div class="animate-spin rounded-full h-14 w-14 border-t-2 border-b-2 border-blue-500 mb-6"></div>
-            <p class="text-gray-400 text-lg animate-pulse font-medium">Sincronizando com a nuvem...</p>
+        <div x-show="isLoading" class="flex flex-col items-center justify-center py-32">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-latam-pink mb-4"></div>
+            <p class="text-gray-400 text-sm uppercase tracking-widest font-semibold animate-pulse">Sincronizando Banco de Dados</p>
         </div>
 
-        <div x-cloak x-show="!isLoading && !isSearching && level === 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            <template x-for="cat in categories" :key="cat">
-                <div @click="goToLevel(1, cat)" class="card-folder bg-gray-800/90 rounded-xl p-8 border border-gray-700/80 flex flex-col items-center justify-center min-h-[160px] text-center group">
-                    <div class="bg-gray-700/40 p-4 rounded-full mb-4 group-hover:bg-blue-900/40 group-hover:text-blue-400 transition-colors text-gray-400">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+        <div x-cloak x-show="!isLoading && !isSearching && (level === 0 || level === 1)" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" x-transition.opacity>
+            
+            <template x-if="level === 0">
+                <template x-for="cat in categories" :key="cat">
+                    <div @click="goToLevel(1, cat)" class="tile-hover glass-panel rounded-2xl p-4 flex items-center gap-4 group">
+                        <div class="p-3 rounded-xl bg-latam-bg border border-latam-border group-hover:border-latam-purple/50 text-gray-400 group-hover:text-latam-pink transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h2 class="text-sm font-bold text-gray-200 capitalize truncate group-hover:text-white" x-text="cat"></h2>
+                            <p class="text-[10px] uppercase tracking-wider text-gray-500 mt-0.5">Categorias</p>
+                        </div>
                     </div>
-                    <h2 class="text-2xl font-bold text-white capitalize group-hover:text-blue-400 transition-colors" x-text="cat"></h2>
-                    <p class="text-gray-500 text-sm mt-1.5 font-medium">Abrir seção</p>
-                </div>
+                </template>
+            </template>
+
+            <template x-if="level === 1">
+                <template x-for="loc in locations" :key="loc">
+                    <div @click="goToLevel(2, selectedCat, loc)" class="tile-hover glass-panel rounded-2xl p-4 flex items-center gap-4 group relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-latam-purple to-latam-pink opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div class="p-3 rounded-xl bg-latam-bg border border-latam-border text-gray-400 group-hover:text-latam-purple transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h2 class="text-sm font-bold text-gray-200 truncate group-hover:text-white" x-text="loc"></h2>
+                            <p class="text-[10px] uppercase tracking-wider text-gray-500 mt-0.5">Móvel</p>
+                        </div>
+                    </div>
+                </template>
             </template>
         </div>
 
-        <div x-cloak x-show="!isLoading && !isSearching && level === 1" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <template x-for="loc in locations" :key="loc">
-                <div @click="goToLevel(2, selectedCat, loc)" class="card-folder bg-gray-800/90 rounded-xl p-6 border border-gray-700/80 flex flex-col items-center text-center group relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <svg class="w-12 h-12 text-gray-500 mb-3 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                    <h2 class="text-xl font-bold text-white" x-text="loc"></h2>
-                    <p class="text-gray-500 text-sm mt-1">Ver compartimentos</p>
-                </div>
-            </template>
-        </div>
-
-        <div x-cloak x-show="!isLoading && !isSearching && level === 2" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div x-cloak x-show="!isLoading && !isSearching && level === 2" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" x-transition.opacity>
             <template x-for="sub in subLocations" :key="sub">
-                <div @click="goToLevel(3, selectedCat, selectedLoc, sub)" class="card-folder bg-gray-800/90 rounded-xl p-6 border border-gray-700/80 flex flex-col items-center text-center group">
-                    <svg class="w-10 h-10 text-gray-600 mb-3 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
-                    <h2 class="text-lg font-bold text-gray-200 group-hover:text-white" x-text="sub"></h2>
-                    <p class="text-blue-500 text-xs font-bold mt-2.5 uppercase tracking-wider">Visualizar ferramentas</p>
+                <div @click="goToLevel(3, selectedCat, selectedLoc, sub)" class="tile-hover glass-panel rounded-2xl p-4 flex items-center gap-4 group">
+                    <div class="p-2.5 rounded-lg bg-latam-bg border border-latam-border text-gray-500 group-hover:text-latam-pink transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h2 class="text-sm font-bold text-gray-200 truncate group-hover:text-white" x-text="sub"></h2>
+                        <p class="text-[10px] uppercase tracking-wider text-latam-pink/80 font-bold mt-0.5">Abrir</p>
+                    </div>
                 </div>
             </template>
         </div>
 
-        <div x-cloak x-show="!isLoading && (isSearching || level === 3)" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div x-cloak x-show="!isLoading && (isSearching || level === 3)" class="flex flex-col gap-3" x-transition.opacity>
             <template x-for="tool in (isSearching ? searchResults : toolsInSubLocation)" :key="tool.id">
-                <div class="card-tool bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-md flex flex-col h-full group">
+                
+                <div class="list-item-hover glass-panel rounded-2xl p-3 flex flex-col sm:flex-row sm:items-center gap-4 relative overflow-hidden group">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-latam-purple to-latam-pink opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     
-                    <div class="h-48 bg-gray-900 flex items-center justify-center relative border-b border-gray-700/60 p-2">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-latam-bg rounded-xl overflow-hidden flex items-center justify-center border border-latam-border relative shadow-inner">
                         <template x-if="tool.img">
-                            <img :src="tool.img" :alt="tool.name" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200">
+                            <img :src="tool.img" class="w-full h-full object-contain p-1 mix-blend-screen group-hover:scale-110 transition-transform duration-300">
                         </template>
                         <template x-if="!tool.img">
-                            <div class="flex flex-col items-center text-gray-600">
-                                <svg class="w-10 h-10 mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                <span class="text-xs font-semibold">Sem foto cadastrada</span>
-                            </div>
+                            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         </template>
                         
                         <template x-if="tool.special">
-                            <span class="absolute top-3 right-3 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-md uppercase tracking-widest z-10">Special</span>
+                            <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-latam-pink rounded-full border border-latam-surface shadow-[0_0_8px_rgba(227,0,79,0.8)]"></span>
                         </template>
                     </div>
 
-                    <div class="p-5 flex-grow flex flex-col bg-gray-800/40">
-                        <h3 class="text-base font-bold text-white mb-1.5 leading-tight group-hover:text-blue-400 transition-colors" x-text="tool.name"></h3>
-                        <p class="text-blue-400 text-xs font-mono mb-4 bg-blue-950/40 inline-block self-start px-2 py-1 rounded border border-blue-900/40 shadow-inner" x-text="tool.code"></p>
-                        
-                        <div class="mt-auto pt-3 border-t border-gray-700/60 flex flex-col space-y-1 text-xs text-gray-400">
-                            <div class="flex items-center font-medium">
-                                <svg class="w-3.5 h-3.5 mr-2 flex-shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                                <span class="capitalize" x-text="tool.cat + ' ➔ ' + tool.loc"></span>
-                            </div>
-                            <div class="flex items-center text-gray-500 font-mono">
-                                <svg class="w-3 h-3 mr-2.5 ml-0.5 flex-shrink-0 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                <span x-text="tool.sub"></span>
-                            </div>
+                    <div class="flex-1 min-w-0 py-1">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <h3 class="text-base font-bold text-gray-100 truncate tracking-wide" x-text="tool.name"></h3>
+                            <template x-if="tool.special">
+                                <span class="bg-gradient-to-r from-latam-purple to-latam-pink text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-widest shadow-sm">Especial</span>
+                            </template>
+                        </div>
+                        <span class="inline-block bg-latam-purple/10 text-latam-purple border border-latam-purple/20 text-xs px-2.5 py-1 rounded-md font-mono font-medium shadow-inner" x-text="tool.code"></span>
+                    </div>
+
+                    <div class="sm:text-right flex flex-col sm:items-end justify-center py-1 border-t sm:border-t-0 border-latam-border mt-2 sm:mt-0 pt-3 sm:pt-0">
+                        <div class="flex items-center gap-1.5 justify-start sm:justify-end text-sm font-medium text-gray-400">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                            <span class="capitalize" x-text="tool.loc"></span>
+                        </div>
+                        <div class="flex items-center gap-1.5 justify-start sm:justify-end mt-1 text-xs text-gray-500 font-mono">
+                            <svg class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            <span x-text="tool.sub"></span>
                         </div>
                     </div>
 
@@ -155,10 +205,12 @@
             </template>
         </div>
 
-        <div x-cloak x-show="!isLoading && isSearching && searchResults.length === 0" class="text-center py-20 bg-gray-800/30 rounded-xl border border-gray-700/60 mt-6 shadow-sm">
-            <svg class="w-14 h-14 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <h3 class="text-lg font-medium text-gray-300">Nenhum registro localizado</h3>
-            <p class="text-gray-500 text-sm mt-1">Revise os termos inseridos ou tente redefinir sua busca.</p>
+        <div x-cloak x-show="!isLoading && isSearching && searchResults.length === 0" class="text-center py-24 glass-panel rounded-2xl mt-6">
+            <div class="w-16 h-16 mx-auto bg-latam-bg rounded-full flex items-center justify-center border border-latam-border mb-4">
+                <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-300 tracking-wide">Sem resultados</h3>
+            <p class="text-gray-500 text-sm mt-1">Nenhuma ferramenta corresponde à sua busca.</p>
         </div>
 
     </div>
@@ -169,8 +221,6 @@
                 toolsList: [],
                 isLoading: true,
                 searchQuery: '',
-                
-                // Estados de Controle das Camadas
                 level: 0,
                 selectedCat: null,
                 selectedLoc: null,
@@ -178,15 +228,13 @@
 
                 async init() {
                     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRHBw7M7f58VdQOb22lLEl6759ApiWB0fFHdqU1I8p45seWfxR7C-_X5tBGmTw4-ErnJaurfch2v3Bw/pub?gid=1418929880&single=true&output=csv';
-                    
                     try {
                         const response = await fetch(csvUrl);
-                        if (!response.ok) throw new Error("A resposta da rede não foi satisfatória.");
+                        if (!response.ok) throw new Error("Erro de rede");
                         const csvText = await response.text();
                         this.parsePlanilha(csvText);
                     } catch (erro) {
-                        console.error("Falha de comunicação com o banco:", erro);
-                        alert("Não foi possível carregar os registros. Tente reiniciar a aplicação.");
+                        console.error("Erro:", erro);
                     } finally {
                         this.isLoading = false;
                     }
@@ -195,96 +243,48 @@
                 parsePlanilha(csvText) {
                     const linhas = csvText.split(/\r?\n/);
                     const ferramentas = [];
+                    const regexCSV = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
                     
                     for (let i = 1; i < linhas.length; i++) {
                         if (!linhas[i].trim()) continue;
+                        const colunas = linhas[i].split(regexCSV).map(c => c.replace(/^"|"$/g, '').trim());
                         
-                        // Máquina de estado para quebrar o CSV respeitando vírgulas dentro de aspas
-                        const colunas = [];
-                        let campoAtual = '';
-                        let dentroDeAspas = false;
-                        const linhaCompleta = linhas[i];
-                        
-                        for (let j = 0; j < linhaCompleta.length; j++) {
-                            const char = linhaCompleta[j];
-                            if (char === '"') {
-                                dentroDeAspas = !dentroDeAspas;
-                            } else if (char === ',' && !dentroDeAspas) {
-                                colunas.push(campoAtual.trim());
-                                campoAtual = '';
-                            } else {
-                                campoAtual += char;
-                            }
-                        }
-                        colunas.push(campoAtual.trim());
-                        
-                        // Limpa as aspas residuais das extremidades dos campos
-                        const limpos = colunas.map(c => c.replace(/^"|"$/g, '').trim());
-                        
-                        const catRaw = limpos[2] ? limpos[2] : '';
-                        const locRaw = limpos[3] ? limpos[3] : '';
-                        const subRaw = limpos[4] ? limpos[4] : '';
+                        const catRaw = colunas[2] ? colunas[2] : '';
+                        const locRaw = colunas[3] ? colunas[3] : '';
+                        const subRaw = colunas[4] ? colunas[4] : '';
                         
                         ferramentas.push({
                             id: i,
-                            name: limpos[0] ? limpos[0] : 'N/A',
-                            code: limpos[1] ? limpos[1] : 'N/A',
+                            name: colunas[0] ? colunas[0] : 'N/A',
+                            code: colunas[1] ? colunas[1] : 'N/A',
                             cat: catRaw !== '' ? catRaw.toLowerCase() : 'Sem Categoria',
                             loc: locRaw !== '' ? locRaw : 'Sem Móvel',
                             sub: (subRaw !== '' && subRaw.toUpperCase() !== 'N/A') ? subRaw : 'Sem Divisão',
-                            img: limpos[5] ? limpos[5] : '',
-                            special: limpos[6] && limpos[6].toUpperCase() === 'VERDADEIRO'
+                            img: colunas[5] ? colunas[5] : '',
+                            special: colunas[6] && colunas[6].toUpperCase() === 'VERDADEIRO'
                         });
                     }
                     this.toolsList = ferramentas;
                 },
 
                 goToLevel(targetLevel, cat = null, loc = null, sub = null) {
-                    this.searchQuery = ''; // Reseta a busca para preservar o estado ao navegar manual
+                    this.searchQuery = ''; 
                     this.level = targetLevel;
                     this.selectedCat = cat;
                     this.selectedLoc = loc;
                     this.selectedSub = sub;
                 },
 
-                get isSearching() {
-                    return this.searchQuery.trim().length > 0;
-                },
-
+                get isSearching() { return this.searchQuery.trim().length > 0; },
                 get searchResults() {
                     if (!this.isSearching) return [];
                     const query = this.searchQuery.toLowerCase();
-                    return this.toolsList.filter(t => 
-                        t.name.toLowerCase().includes(query) || 
-                        t.code.toLowerCase().includes(query)
-                    );
+                    return this.toolsList.filter(t => t.name.toLowerCase().includes(query) || t.code.toLowerCase().includes(query));
                 },
-
-                get categories() {
-                    return [...new Set(this.toolsList.map(t => t.cat))].filter(Boolean).sort();
-                },
-
-                get locations() {
-                    return [...new Set(this.toolsList
-                        .filter(t => t.cat === this.selectedCat)
-                        .map(t => t.loc)
-                    )].filter(Boolean).sort();
-                },
-
-                get subLocations() {
-                    return [...new Set(this.toolsList
-                        .filter(t => t.cat === this.selectedCat && t.loc === this.selectedLoc)
-                        .map(t => t.sub)
-                    )].filter(Boolean).sort();
-                },
-
-                get toolsInSubLocation() {
-                    return this.toolsList.filter(t => 
-                        t.cat === this.selectedCat && 
-                        t.loc === this.selectedLoc && 
-                        t.sub === this.selectedSub
-                    );
-                }
+                get categories() { return [...new Set(this.toolsList.map(t => t.cat))].filter(Boolean).sort(); },
+                get locations() { return [...new Set(this.toolsList.filter(t => t.cat === this.selectedCat).map(t => t.loc))].filter(Boolean).sort(); },
+                get subLocations() { return [...new Set(this.toolsList.filter(t => t.cat === this.selectedCat && t.loc === this.selectedLoc).map(t => t.sub))].filter(Boolean).sort(); },
+                get toolsInSubLocation() { return this.toolsList.filter(t => t.cat === this.selectedCat && t.loc === this.selectedLoc && t.sub === this.selectedSub); }
             }));
         });
     </script>
