@@ -3,22 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Setup LATAM - Motor Base</title>
+    <title>Setup LATAM - Acervo Físico</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <style> [x-cloak] { display: none !important; } </style>
+    <style> 
+        [x-cloak] { display: none !important; } 
+        /* Cor base do azul escuro do seu layout */
+        .bg-latam-blue { background-color: #1a3683; }
+        .text-latam-blue { color: #1a3683; }
+    </style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('appData', () => ({
                 screen: 'home',
-                model: 'Molde de Referência', // Simplificado
+                model: 'Molde de Referência',
                 cycle: '1',
                 step: 0,
                 activeModule: null, 
                 checked: {},
-                stepNames: ['Preparação', 'Execução', 'Documentação', 'Finalização'], // Nomes mais genéricos para projetos futuros
+                stepNames: ['Preparação', 'Execução', 'Documentação', 'Finalização'],
                 
                 modalOpen: false,
                 modalData: { imgUrl: '', manualPage: '', toolCode: '' },
@@ -29,7 +34,7 @@
                 selectedContainer: null,
                 selectedSub: null,
 
-                // --- BANCO DE DADOS DO ACERVO DE FERRAMENTAS (MANTIDO COMPLETO) ---
+                // --- BANCO DE DADOS DO ACERVO DE FERRAMENTAS ---
                 toolsList: [
                     // CAIXA 1
                     { name: 'Adaptor (Special Tool)', code: 'Q47963-T', cat: 'caixas', loc: 'Caixa 1', sub: 'Compartimento Superior', image: 'https://i.imgur.com/UOUvSSN.jpeg', special: true },
@@ -81,31 +86,57 @@
                     { name: 'Relógio Comparador', code: 'RC0248', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira A', image: '' },
                     { name: 'Torquímetro 50-250 LBF.FT', code: 'TO0290', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira B', image: '' },
                     { name: 'Ferramenta de Fixação dos Bolts A320/A321', code: 'MY46037-T', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '', special: true },
-                    { name: 'Proteção p/ Jateamento de Pistões', code: 'MY46048-T', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira D', image: '', special: true },
-
-                    // FROTAS ESPECIAIS: B787 e A350
-                    { name: 'Tool, Brake Assembly (B787-9/10)', code: 'F28014000-T', cat: 'frotas', loc: 'Carro B787 - 9/10', sub: 'Parte Superior', image: '', special: true },
-                    { name: 'EBA Carrier Guide (B787-9/10)', code: 'GS47892', cat: 'frotas', loc: 'Carro B787 - 9/10', sub: 'Caixa 2', image: '', special: true },
-                    { name: 'Compression Tool (A350)', code: 'T45811', cat: 'frotas', loc: 'Palete A350', sub: 'Caixa 3', image: '', special: true }
+                    { name: 'Proteção p/ Jateamento de Pistões', code: 'MY46048-T', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira D', image: '', special: true }
                 ],
 
-                // --- FUNÇÕES DA GALERIA ---
+                // --- LÓGICA REFINADA DA GALERIA ---
+                
+                // Dispara toda vez que você digita na barra de pesquisa
+                handleSearch() {
+                    if (this.searchQuery !== '') {
+                        this.activeTab = 'all';
+                        this.selectedContainer = null;
+                        this.selectedSub = null;
+                    }
+                },
+
+                // Alterna entre as abas e limpa pesquisas ativas
+                setTab(tab) {
+                    this.activeTab = tab;
+                    this.searchQuery = '';
+                    this.selectedContainer = null;
+                    this.selectedSub = null;
+                },
+
+                // Retorna apenas as ferramentas que devem aparecer na tela naquele momento
                 get filteredTools() {
                     let list = this.toolsList;
+                    
+                    // Se estiver pesquisando, ignora as pastas e filtra tudo
                     if (this.searchQuery !== '') {
                         const q = this.searchQuery.toLowerCase();
                         return list.filter(t => t.name.toLowerCase().includes(q) || t.code.toLowerCase().includes(q));
                     }
+                    
+                    // Se não estiver pesquisando, respeita a navegação de pastas
                     if (this.activeTab !== 'all') {
                         list = list.filter(t => t.cat === this.activeTab);
+                        
                         if (this.selectedContainer) {
                             list = list.filter(t => t.loc === this.selectedContainer);
+                            
                             if (this.selectedSub) {
                                 list = list.filter(t => t.sub === this.selectedSub);
                             }
                         }
                     }
                     return list;
+                },
+
+                // Determina SE a lista de cartões de ferramentas deve ser exibida
+                get showToolCards() {
+                    // Exibe se estiver buscando, OU se a aba "Tudo" estiver ativa, OU se já tiver entrado em uma gaveta/prateleira específica
+                    return this.searchQuery !== '' || this.activeTab === 'all' || (this.selectedContainer !== null && this.selectedSub !== null);
                 },
 
                 get uniqueContainers() {
@@ -117,19 +148,6 @@
                     if (!this.selectedContainer) return [];
                     const filtered = this.toolsList.filter(t => t.loc === this.selectedContainer);
                     return [...new Set(filtered.map(t => t.sub))];
-                },
-
-                openLocationModalByCode(code) {
-                    if(!code) return;
-                    const cleanCode = code.replace('-T', '').split(' / ')[0].trim().toLowerCase();
-                    const tool = this.toolsList.find(t => t.code.toLowerCase().includes(cleanCode));
-                    if (tool) {
-                        this.screen = 'gallery';
-                        this.searchQuery = tool.code;
-                        window.scrollTo(0, 0);
-                    } else {
-                        alert("Ferramenta mapeada na caixa padrão da oficina.");
-                    }
                 },
 
                 // --- CONTROLE DO APP ---
@@ -182,30 +200,18 @@
 
                 getStepIcon(index) {
                     const icons = [
-                        '<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1-1-1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
-                        '<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
-                        '<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>',
-                        '<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>'
+                        '<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1-1-1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
+                        '<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
+                        '<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>',
+                        '<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>'
                     ];
                     return icons[index];
                 },
 
-                // --- ESTRUTURA BASE (Molde simplificado para futuros projetos customizados) ---
+                // --- ESTRUTURA BASE (Molde simplificado) ---
                 currentModules() {
                     let stepsData = [];
-
-                    // ETAPA 0: PREPARAÇÃO
-                    stepsData[0] = [
-                        {
-                            id: 'ref_prep',
-                            title: 'Módulo de Preparação',
-                            items: [
-                                { id: 'prep_1', text: 'Esta é uma etapa de exemplo de preparação para o projeto.' }
-                            ]
-                        }
-                    ];
-
-                    // ETAPA 1: EXECUÇÃO (Com exemplo de vínculo de ferramenta)
+                    stepsData[0] = [{ id: 'ref_prep', title: 'Módulo de Preparação', items: [{ id: 'prep_1', text: 'Esta é uma etapa de exemplo de preparação para o projeto.' }] }];
                     stepsData[1] = [
                         { 
                             id: 'ref_exec', 
@@ -216,66 +222,34 @@
                                     id: 'exec_2', 
                                     text: 'Exemplo de instrução conectada diretamente a uma ferramenta do acervo.', 
                                     highlight: 'info',
-                                    reference: {
-                                        btnText: 'Ref. Ferramenta',
-                                        imgUrl: 'https://i.imgur.com/UOUvSSN.jpeg',
-                                        manualPage: 'Manual Base Pág. 10',
-                                        toolCode: 'Q47963-T'
-                                    }
+                                    reference: { btnText: 'Ref. Ferramenta', imgUrl: 'https://i.imgur.com/UOUvSSN.jpeg', manualPage: 'Manual Base Pág. 10', toolCode: 'Q47963-T' }
                                 }
                             ] 
                         }
                     ];
-
-                    // ETAPA 2: DOCUMENTAÇÃO
-                    stepsData[2] = [
-                        {
-                            id: 'ref_doc',
-                            title: 'Módulo de Registros',
-                            items: [
-                                { id: 'doc_1', text: 'Exemplo de preenchimento de laudo ou documento.' }
-                            ]
-                        }
-                    ];
-
-                    // ETAPA 3: FINALIZAÇÃO
-                    stepsData[3] = [
-                        {
-                            id: 'ref_fin',
-                            title: 'Módulo de Encerramento',
-                            items: [
-                                { id: 'fin_1', text: 'Exemplo de ação de encerramento de projeto.' }
-                            ]
-                        }
-                    ];
-
+                    stepsData[2] = [{ id: 'ref_doc', title: 'Módulo de Registros', items: [{ id: 'doc_1', text: 'Exemplo de preenchimento de laudo ou documento.' }] }];
+                    stepsData[3] = [{ id: 'ref_fin', title: 'Módulo de Encerramento', items: [{ id: 'fin_1', text: 'Exemplo de ação de encerramento de projeto.' }] }];
                     return stepsData[this.step] || [];
                 }
             }));
         });
     </script>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans antialiased min-h-screen" x-data="appData">
+<body class="bg-[#f8f9fa] text-gray-800 font-sans antialiased min-h-screen" x-data="appData">
 
+    <!-- TELA 1: HOME -->
     <div x-show="screen === 'home'" x-cloak class="min-h-screen flex flex-col items-center">
         <div class="w-full max-w-md bg-white min-h-screen shadow-2xl flex flex-col">
             <div class="bg-red-600 p-8 text-white text-center rounded-b-3xl shadow-lg relative">
                 <button @click="openGallery()" class="absolute top-6 right-6 p-2 bg-white/20 hover:bg-white/30 rounded-full transition" title="Acervo de Ferramentas">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
                 </button>
-
                 <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3 opacity-90"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.2-1.1.6L3 8l5 5-3 3-3-1-1 1 2.5 4.5L11 23l1-1-1-3 3-3 5 5 1.2-.7c.4-.2.7-.6.6-1.1z"/></svg>
                 <h1 class="text-3xl font-extrabold tracking-tight">Criador de Projetos</h1>
                 <p class="text-red-100 mt-1 font-medium">Guia Operacional Base</p>
             </div>
 
             <div class="flex-1 p-6 flex flex-col justify-center space-y-8">
-                
-                <div class="text-center text-gray-500 mb-4">
-                    <p>O motor do app está isolado.</p>
-                    <p class="text-sm">Clique abaixo para ver a estrutura de molde funcionando com a Galeria.</p>
-                </div>
-
                 <button @click="startApp()" class="w-full py-4 mt-8 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all duration-300 transform active:scale-95 bg-green-500 hover:bg-green-600 text-white shadow-lg">
                     Testar Projeto Base 
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
@@ -284,93 +258,117 @@
         </div>
     </div>
 
-    <div x-show="screen === 'gallery'" x-cloak class="min-h-screen flex flex-col w-full max-w-md mx-auto bg-gray-50 relative shadow-2xl">
-        <div class="bg-blue-900 text-white p-4 pt-6 shadow-md sticky top-0 z-20">
+    <!-- TELA 2: GALERIA DE FERRAMENTAS (IDÊNTICA AOS PRINTS DO USUÁRIO) -->
+    <div x-show="screen === 'gallery'" x-cloak class="min-h-screen flex flex-col w-full max-w-md mx-auto bg-[#f8f9fa] relative shadow-2xl">
+        
+        <!-- HEADER AZUL ESCURO -->
+        <div class="bg-latam-blue text-white p-4 pt-6 shadow-md sticky top-0 z-20">
             <div class="flex items-center gap-4 mb-4">
-                <button @click="screen = 'home'" class="p-2 bg-blue-800 rounded-full hover:bg-blue-700 transition transform active:scale-95">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                <button @click="screen = 'home'" class="w-9 h-9 flex items-center justify-center bg-blue-800 rounded-full hover:bg-blue-700 transition transform active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                 </button>
                 <div>
-                    <h1 class="font-black text-xl tracking-wide">Acervo de Ferramentas</h1>
-                    <p class="text-blue-200 text-xs uppercase tracking-widest font-semibold mt-1">Navegação Física</p>
+                    <h1 class="font-black text-xl tracking-wide leading-tight">Acervo de Ferramentas</h1>
+                    <p class="text-blue-200 text-[10px] uppercase tracking-widest font-bold mt-0.5">Navegação Física</p>
                 </div>
             </div>
             
+            <!-- BARRA DE PESQUISA -->
             <div class="relative">
                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                     <svg class="w-4 h-4 text-blue-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/></svg>
                 </div>
-                <input type="search" x-model="searchQuery" @input="if(searchQuery !== '') { activeTab = 'all'; selectedContainer = null; selectedSub = null; }" class="block w-full p-3 pl-10 text-sm text-gray-900 border border-transparent rounded-xl bg-blue-950/50 placeholder-blue-300 focus:ring-blue-500 focus:border-blue-500 focus:bg-white focus:text-blue-900 transition-colors" placeholder="Pesquisar por nome ou P/N..." required>
+                <!-- Dispara o evento handleSearch ao digitar -->
+                <input type="search" x-model="searchQuery" @input="handleSearch()" class="block w-full p-2.5 pl-10 text-sm text-white border border-transparent rounded-lg bg-[#152b69] placeholder-blue-300 focus:ring-blue-500 focus:border-blue-500 focus:bg-white focus:text-blue-900 transition-colors" placeholder="Pesquisar por nome ou P/N...">
             </div>
         </div>
 
-        <div x-show="searchQuery === ''" class="bg-white p-2 border-b flex gap-1 overflow-x-auto text-xs font-bold uppercase tracking-wider">
-            <button @click="activeTab = 'all'; selectedContainer = null; selectedSub = null" :class="activeTab === 'all' ? 'bg-blue-900 text-white' : 'bg-gray-100 text-gray-600'" class="px-3 py-2 rounded-lg flex-shrink-0 transition-colors">Tudo</button>
-            <button @click="activeTab = 'caixas'; selectedContainer = null; selectedSub = null" :class="activeTab === 'caixas' ? 'bg-blue-900 text-white' : 'bg-gray-100 text-gray-600'" class="px-3 py-2 rounded-lg flex-shrink-0 transition-colors">Caixas</button>
-            <button @click="activeTab = 'carros'; selectedContainer = null; selectedSub = null" :class="activeTab === 'carros' ? 'bg-blue-900 text-white' : 'bg-gray-100 text-gray-600'" class="px-3 py-2 rounded-lg flex-shrink-0 transition-colors">Carros</button>
-            <button @click="activeTab = 'armarios'; selectedContainer = null; selectedSub = null" :class="activeTab === 'armarios' ? 'bg-blue-900 text-white' : 'bg-gray-100 text-gray-600'" class="px-3 py-2 rounded-lg flex-shrink-0 transition-colors">Armários</button>
+        <!-- ABAS (SÓ APARECEM SE A PESQUISA ESTIVER VAZIA) -->
+        <div x-show="searchQuery === ''" class="bg-white p-3 border-b border-gray-200 flex gap-2 overflow-x-auto text-xs font-bold shadow-sm">
+            <button @click="setTab('all')" :class="activeTab === 'all' ? 'bg-latam-blue text-white' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-md flex-shrink-0 transition-colors">Tudo</button>
+            <button @click="setTab('caixas')" :class="activeTab === 'caixas' ? 'bg-latam-blue text-white' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-md flex-shrink-0 transition-colors">Caixas</button>
+            <button @click="setTab('carros')" :class="activeTab === 'carros' ? 'bg-latam-blue text-white' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-md flex-shrink-0 transition-colors">Carros</button>
+            <button @click="setTab('armarios')" :class="activeTab === 'armarios' ? 'bg-latam-blue text-white' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-md flex-shrink-0 transition-colors">Armários</button>
         </div>
 
-        <div x-show="searchQuery === '' && activeTab !== 'all'" class="p-4 space-y-2">
-            <div x-show="!selectedContainer" class="grid grid-cols-2 gap-2">
-                <template x-for="container in uniqueContainers" :key="container">
-                    <button @click="selectedContainer = container" class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm text-left font-bold text-blue-900 hover:bg-blue-50 transition-colors flex flex-col justify-between h-20">
-                        <span x-text="container"></span>
-                    </button>
-                </template>
-            </div>
-
-            <div x-show="selectedContainer && !selectedSub" class="space-y-2">
-                <button @click="selectedContainer = null" class="text-xs font-bold text-red-600 flex items-center gap-1 mb-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> Voltar
+        <!-- NÍVEL 1 DAS PASTAS (EX: Escolher CAIXA 1 ou CAIXA 2) -->
+        <div x-show="searchQuery === '' && activeTab !== 'all' && !selectedContainer" class="p-4 grid grid-cols-2 gap-3">
+            <template x-for="container in uniqueContainers" :key="container">
+                <button @click="selectedContainer = container" class="bg-white border border-gray-200 p-5 rounded-xl shadow-sm text-left font-bold text-latam-blue hover:bg-gray-50 transition-colors h-20">
+                    <span x-text="container"></span>
                 </button>
-                <div class="bg-blue-50 border border-blue-200 p-2.5 rounded-xl font-bold text-blue-900 text-sm" x-text="selectedContainer"></div>
-                <template x-for="sub in uniqueSubLocations" :key="sub">
-                    <button @click="selectedSub = sub" class="w-full bg-white border border-gray-200 p-3.5 rounded-xl shadow-sm text-left font-semibold text-gray-700 hover:bg-gray-50 flex justify-between items-center transition-colors">
-                        <span x-text="sub"></span>
-                        <svg class="text-gray-400" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-                    </button>
-                </template>
-            </div>
+            </template>
+        </div>
 
-            <button x-show="selectedSub" @click="selectedSub = null" class="text-xs font-bold text-red-600 flex items-center gap-1 mb-2">
+        <!-- NÍVEL 2 DAS PASTAS (EX: Escolher GAVETAS de dentro da Caixa) -->
+        <div x-show="searchQuery === '' && selectedContainer && !selectedSub" class="p-4 space-y-2">
+            <button @click="selectedContainer = null" class="text-xs font-bold text-red-600 flex items-center gap-1 mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> Voltar
             </button>
+            
+            <template x-for="sub in uniqueSubLocations" :key="sub">
+                <button @click="selectedSub = sub" class="w-full bg-white border border-gray-200 p-4 rounded-xl shadow-sm text-left font-bold text-gray-700 hover:bg-gray-50 flex justify-between items-center transition-colors">
+                    <span x-text="sub"></span>
+                    <svg class="text-gray-400" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+            </template>
         </div>
 
-        <div class="flex-1 p-4 pb-8 overflow-y-auto space-y-4">
-            <div x-show="searchQuery === '' && selectedSub" class="bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide mb-3">
-                Local: <span x-text="selectedContainer"></span> &gt; <span x-text="selectedSub"></span>
+        <!-- NÍVEL 3 (A LISTA DE FERRAMENTAS) -->
+        <!-- Só exibe se (Pesquisa ativa) OU (Aba Tudo ativa) OU (Gaveta selecionada) -->
+        <div x-show="showToolCards" class="flex-1 p-4 pb-8 overflow-y-auto space-y-4">
+            
+            <!-- Barra Cinza de Navegação quando dentro de uma Gaveta -->
+            <div x-show="searchQuery === '' && selectedSub" class="mb-4">
+                <button @click="selectedSub = null" class="text-xs font-bold text-red-600 flex items-center gap-1 mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> Voltar
+                </button>
+                <div class="bg-[#e2e8f0] text-gray-600 px-3 py-2 rounded-md text-[11px] font-bold uppercase tracking-wider w-full">
+                    LOCAL: <span x-text="selectedContainer"></span> &gt; <span x-text="selectedSub"></span>
+                </div>
             </div>
 
+            <!-- CARTÕES DE FERRAMENTA (Identicos aos seus prints) -->
             <template x-for="tool in filteredTools" :key="tool.code + tool.loc + tool.sub">
-                <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-                    <div class="h-32 bg-gray-100 flex items-center justify-center p-2 border-b border-gray-100 relative">
-                        <img :src="tool.image && tool.image !== 'COLE_O_LINK_DO_IMGUR_AQUI' ? tool.image : 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400'" alt="Tool" class="max-h-full object-contain mix-blend-multiply opacity-80">
-                        <div x-show="!tool.image || tool.image === 'COLE_O_LINK_DO_IMGUR_AQUI'" class="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80">
-                            <span class="text-xs font-bold text-gray-400 uppercase tracking-widest bg-white px-3 py-1 rounded-full shadow-sm border border-gray-200">Aguardando Foto</span>
+                <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+                    
+                    <!-- Área da Imagem -->
+                    <div class="h-40 bg-[#f4f5f7] flex items-center justify-center p-4 border-b border-gray-100 relative">
+                        <img x-show="tool.image" :src="tool.image" alt="Tool" class="max-h-full object-contain mix-blend-multiply">
+                        
+                        <!-- Aviso de Aguardando Foto (Fundo leve de madeira com pill branco) -->
+                        <div x-show="!tool.image" class="absolute inset-0 flex items-center justify-center bg-gray-200" style="background-image: url('https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400'); background-size: cover; background-position: center; opacity: 0.15;"></div>
+                        <div x-show="!tool.image" class="absolute inset-0 flex items-center justify-center">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-100">Aguardando Foto</span>
                         </div>
                     </div>
+                    
+                    <!-- Informações da Ferramenta -->
                     <div class="p-4">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest" x-text="tool.name"></p>
-                        <h3 class="text-lg font-black text-blue-900" x-text="tool.code"></h3>
-                        <div class="bg-gray-50 border border-gray-100 p-2 rounded-lg flex items-center gap-2 mt-2">
-                            <svg class="text-orange-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                            <p class="text-xs font-medium text-gray-600">
-                                <span class="font-bold text-gray-900" x-text="tool.loc"></span> &bull; <span x-text="tool.sub"></span>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1" x-text="tool.name"></p>
+                        <h3 class="text-lg font-black text-latam-blue mb-3" x-text="tool.code"></h3>
+                        
+                        <!-- Etiqueta de Localização -->
+                        <div class="bg-[#f8f9fa] border border-gray-100 p-2.5 rounded-lg flex items-center gap-2">
+                            <svg class="text-[#f97316] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                            <p class="text-xs text-gray-600">
+                                <span class="font-bold text-gray-900" x-text="tool.loc"></span> 
+                                <span class="font-bold mx-0.5">•</span> 
+                                <span x-text="tool.sub"></span>
                             </p>
                         </div>
                     </div>
                 </div>
             </template>
-            <div x-show="filteredTools.length === 0" class="text-center p-8 text-gray-400">
+            <div x-show="filteredTools.length === 0" class="text-center p-8 text-gray-400 font-bold text-sm">
                 <p>Nenhuma ferramenta encontrada.</p>
             </div>
         </div>
     </div>
 
+    <!-- TELA 3: LISTA DE MÓDULOS -->
     <div x-show="screen === 'checklist'" x-cloak class="min-h-screen flex flex-col w-full max-w-md mx-auto bg-gray-50 relative shadow-2xl">
-        <div class="bg-blue-900 text-white p-4 pt-6 shadow-md sticky top-0 z-20">
+        <div class="bg-latam-blue text-white p-4 pt-6 shadow-md sticky top-0 z-20">
             <div class="flex items-center justify-between mb-6">
                 <button @click="screen = 'home'" class="p-2 bg-blue-800 rounded-full hover:bg-blue-700 transition transform active:scale-95">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
@@ -384,8 +382,8 @@
             <div class="flex justify-between relative px-4">
                 <div class="absolute top-1/2 left-8 right-8 h-1 bg-blue-800 transform -translate-y-1/2 rounded-full"></div>
                 <template x-for="(name, index) in stepNames" :key="index">
-                    <div class="flex flex-col items-center gap-1 bg-blue-900 px-2 relative z-10">
-                        <div :class="step === index ? 'border-white bg-red-600 text-white shadow-lg' : (step > index ? 'border-green-400 bg-green-400 text-blue-900' : 'border-blue-800 bg-blue-900 text-blue-400')"
+                    <div class="flex flex-col items-center gap-1 bg-latam-blue px-2 relative z-10">
+                        <div :class="step === index ? 'border-white bg-red-600 text-white shadow-lg' : (step > index ? 'border-green-400 bg-green-400 text-latam-blue' : 'border-blue-800 bg-latam-blue text-blue-400')"
                              class="w-10 h-10 rounded-full flex items-center justify-center border-4 transition-colors duration-300">
                              <svg x-show="step > index" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
                              <div x-show="step <= index" x-html="getStepIcon(index)"></div>
@@ -393,22 +391,19 @@
                     </div>
                 </template>
             </div>
-            <div class="text-center mt-3 text-sm font-bold text-white uppercase tracking-widest bg-blue-900 bg-opacity-50 py-1.5 mx-auto max-w-xs rounded-full" x-text="stepNames[step]"></div>
+            <div class="text-center mt-3 text-sm font-bold text-white uppercase tracking-widest bg-latam-blue bg-opacity-50 py-1.5 mx-auto max-w-xs rounded-full" x-text="stepNames[step]"></div>
         </div>
 
         <div class="flex-1 p-5 pb-32 overflow-y-auto">
             <div class="space-y-4">
                 <template x-for="module in currentModules()" :key="module.id">
-                    <button @click="openModule(module)" 
-                        class="w-full flex justify-between items-center bg-white border border-gray-200 shadow-sm p-5 rounded-2xl text-blue-900 font-extrabold text-base uppercase tracking-wider transition-all transform hover:border-blue-300 active:scale-95 group">
-                        
+                    <button @click="openModule(module)" class="w-full flex justify-between items-center bg-white border border-gray-200 shadow-sm p-5 rounded-2xl text-latam-blue font-extrabold text-base uppercase tracking-wider transition-all transform hover:border-blue-300 active:scale-95 group">
                         <div class="flex items-center gap-4 text-left">
                             <div :class="isModuleComplete(module) ? 'bg-green-500 border-green-500 text-white' : 'bg-gray-50 border-gray-300 text-gray-300'" class="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors">
                                 <svg x-show="isModuleComplete(module)" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/></svg>
                             </div>
                             <span x-text="module.title" :class="isModuleComplete(module) ? 'text-green-700' : ''"></span>
                         </div>
-                        
                         <div class="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                             <svg class="w-5 h-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                         </div>
@@ -421,27 +416,18 @@
             <div class="max-w-md mx-auto flex justify-between gap-4">
                 <button @click="step = Math.max(0, step - 1)" :disabled="step === 0"
                     :class="step === 0 ? 'bg-gray-50 text-gray-300 border border-gray-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 transform active:scale-95'"
-                    class="flex-1 py-4 px-4 rounded-2xl font-bold text-sm transition-all">
-                    Voltar
-                </button>
-                
+                    class="flex-1 py-4 px-4 rounded-2xl font-bold text-sm transition-all"> Voltar </button>
                 <button x-show="step < stepNames.length - 1" @click="step = Math.min(stepNames.length - 1, step + 1)"
-                    :class="isStepComplete() ? 'bg-blue-900 text-white hover:bg-blue-800 shadow-lg transform active:scale-95' : 'bg-blue-50 text-blue-300 border border-blue-100'"
-                    class="flex-none w-2/3 py-4 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
-                    Avançar Etapa
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                </button>
-
+                    :class="isStepComplete() ? 'bg-latam-blue text-white hover:bg-blue-800 shadow-lg transform active:scale-95' : 'bg-blue-50 text-blue-300 border border-blue-100'"
+                    class="flex-none w-2/3 py-4 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all"> Avançar Etapa <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
                 <button x-show="step === stepNames.length - 1" @click="finishApp()"
                     :class="isStepComplete() ? 'bg-green-500 text-white shadow-lg transform active:scale-95' : 'bg-green-50 text-green-200 border border-green-100'"
-                    class="flex-none w-2/3 py-4 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
-                    Finalizar Projeto
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-                </button>
+                    class="flex-none w-2/3 py-4 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all"> Finalizar Projeto <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></button>
             </div>
         </div>
     </div>
 
+    <!-- ECRÃ 4: SUB-ABA (MÓDULOS DOS CHECKS) -->
     <div x-show="screen === 'module'" x-cloak class="min-h-screen flex flex-col w-full max-w-md mx-auto bg-gray-50 relative shadow-2xl">
         <div class="bg-white p-4 pt-6 shadow-sm sticky top-0 z-20 border-b border-gray-200">
             <div class="flex items-center gap-4">
@@ -459,33 +445,11 @@
             <template x-for="item in (activeModule?.items || [])" :key="item.id">
                 <div :class="checked[item.id] ? 'bg-green-50 border-green-500 transform scale-95 opacity-75' : (item.highlight === 'alert' ? 'bg-orange-50 bg-opacity-80 border-orange-300 shadow-sm' : (item.highlight === 'info' ? 'bg-blue-50 bg-opacity-80 border-blue-300 shadow-sm' : 'bg-white border-gray-200 shadow-sm'))"
                      class="p-4 rounded-xl border-2 flex gap-4 items-start transition-all duration-200">
-                    
-                    <div @click="toggleCheck(item.id)" :class="checked[item.id] ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-gray-50'"
-                         class="mt-0.5 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center border-2 transition-colors cursor-pointer">
-                        <svg x-show="checked[item.id]" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>
-                    </div>
-
+                    <div @click="toggleCheck(item.id)" :class="checked[item.id] ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-gray-50'" class="mt-0.5 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center border-2 transition-colors cursor-pointer"><svg x-show="checked[item.id]" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg></div>
                     <div class="flex-1 pt-0.5 flex flex-col gap-2">
                         <p :class="checked[item.id] ? 'text-gray-500 line-through' : 'text-gray-800 font-semibold'" class="text-sm leading-snug">
-                            <svg x-show="item.highlight === 'alert' && !checked[item.id]" class="inline w-4 h-4 text-orange-500 mr-1.5 mb-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-                            <svg x-show="item.highlight === 'info' && !checked[item.id]" class="inline w-4 h-4 text-blue-500 mr-1.5 mb-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                             <span x-text="item.text"></span>
                         </p>
-
-                        <div class="flex flex-wrap items-center gap-2 mt-1">
-                            <template x-if="item.reference">
-                                <div class="flex gap-2 w-full mt-1">
-                                    <button @click="openModalImage(item.reference)" class="flex-1 inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors">
-                                        <svg style="width: 14px; height: 14px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                                        <span x-text="item.reference.btnText || 'Ver Referência'"></span>
-                                    </button>
-                                    
-                                    <button @click="openLocationModalByCode(item.reference.toolCode)" class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-orange-100 text-orange-600 rounded-lg border border-orange-200 hover:bg-orange-200 transition transform active:scale-95 shadow-sm">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                    </button>
-                                </div>
-                            </template>
-                        </div>
                     </div>
                 </div>
             </template>
@@ -493,48 +457,9 @@
 
         <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-6 shadow-2xl z-20">
             <div class="max-w-md mx-auto">
-                <button @click="closeModule()"
-                    :class="isModuleComplete(activeModule) ? 'bg-blue-900 text-white hover:bg-blue-800 shadow-lg' : 'bg-gray-200 text-gray-700'"
-                    class="w-full py-4 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all transform active:scale-95">
-                    <span x-text="isModuleComplete(activeModule) ? 'Módulo Concluído - Voltar' : 'Voltar para Lista'"></span>
-                    <svg x-show="isModuleComplete(activeModule)" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/></svg>
-                </button>
+                <button @click="closeModule()" :class="isModuleComplete(activeModule) ? 'bg-latam-blue text-white hover:bg-blue-800 shadow-lg' : 'bg-gray-200 text-gray-700'" class="w-full py-4 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all transform active:scale-95"><span x-text="isModuleComplete(activeModule) ? 'Módulo Concluído - Voltar' : 'Voltar para Lista'"></span></button>
             </div>
         </div>
     </div>
-
-    <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300" style="background-color: rgba(15, 23, 42, 0.8);" @click.self="closeModalImage()">
-        <div class="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border border-gray-100 flex flex-col" style="max-height: 85vh;">
-            <div class="bg-gray-900 text-white p-4 flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <svg class="w-5 h-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                    <span class="font-extrabold text-xs uppercase tracking-widest text-gray-300">Apoio Visual / Tool</span>
-                </div>
-                <button @click="closeModalImage()" class="p-1 text-gray-400 hover:text-white rounded-full bg-gray-800 transition shadow-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                </button>
-            </div>
-            <div class="flex-1 overflow-y-auto p-4 bg-gray-100 flex flex-col items-center justify-center" style="min-height: 250px;">
-                <img :src="modalData.imgUrl" class="max-w-full object-contain rounded-xl shadow-md border border-gray-200 bg-white" style="max-height: 40vh;" alt="Referência Técnica">
-            </div>
-            
-            <div class="bg-white p-4 border-t border-gray-200 space-y-2">
-                <div class="flex flex-col gap-2 text-xs">
-                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 w-full">
-                        <p class="text-gray-400 font-bold uppercase tracking-wider mb-1" style="font-size: 9px;">Manual Ref.</p>
-                        <p class="text-gray-800 font-bold leading-relaxed break-words" x-text="modalData.manualPage"></p>
-                    </div>
-                    <div class="bg-blue-50 p-3 rounded-xl border border-blue-200 w-full">
-                        <p class="text-blue-500 font-bold uppercase tracking-wider mb-1" style="font-size: 9px;">CMM Tool / Part</p>
-                        <p class="text-blue-900 font-black leading-relaxed break-words" x-text="modalData.toolCode"></p>
-                    </div>
-                </div>
-                <button @click="closeModalImage()" class="w-full py-3 mt-3 bg-blue-900 text-white font-bold text-sm rounded-xl hover:bg-blue-800 transition shadow-sm">
-                    Fechar Referência
-                </button>
-            </div>
-        </div>
-    </div>
-
 </body>
 </html>
