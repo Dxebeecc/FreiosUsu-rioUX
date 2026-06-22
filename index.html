@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acervo de Ferramentas</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
     <style>
@@ -17,15 +15,17 @@
         ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
         [x-cloak] { display: none !important; }
-        /* Suaviza transição dos cards */
-        .card-hover { transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
-        .card-hover:hover { transform: translateY(-3px); border-color: #3b82f6; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+        
+        .card-folder { transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease; cursor: pointer; }
+        .card-folder:hover { transform: translateY(-2px); border-color: #3b82f6; background-color: #1e293b; }
+        
+        .card-tool { transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+        .card-tool:hover { transform: translateY(-4px); border-color: #3b82f6; box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.4); }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen flex flex-col" x-data="setupApp()">
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-grow">
-        <!-- Cabeçalho e Barra de Pesquisa -->
         <header class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-6">
             <div>
                 <h1 class="text-3xl font-bold text-white tracking-tight">Acervo de Ferramentas</h1>
@@ -35,17 +35,14 @@
             <div class="relative w-full md:w-96 flex items-center">
                 <input type="text" x-model="searchQuery" placeholder="Buscar por nome ou código..." 
                        class="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-4 pl-10 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm">
-                <!-- Ícone de Lupa -->
                 <svg class="w-5 h-5 absolute left-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                <!-- Botão de limpar busca -->
                 <button x-show="isSearching" @click="searchQuery = ''" class="absolute right-3 text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-full p-1 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
         </header>
 
-        <!-- Navegação Breadcrumbs (Trilha de Migalhas) -->
-        <div x-cloak x-show="!isLoading && !isSearching" class="mb-8 bg-gray-800/50 p-3 rounded-lg border border-gray-700/50 w-fit inline-flex items-center space-x-2 text-sm font-medium overflow-x-auto max-w-full">
+        <div x-cloak x-show="!isLoading && !isSearching" class="mb-8 bg-gray-800/40 p-3 rounded-lg border border-gray-700/50 w-fit inline-flex items-center space-x-2 text-sm font-medium overflow-x-auto max-w-full">
             <button @click="goToLevel(0)" class="flex items-center text-gray-400 hover:text-blue-400 transition-colors whitespace-nowrap">
                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                 Início
@@ -54,7 +51,7 @@
             <template x-if="selectedCat">
                 <div class="flex items-center space-x-2">
                     <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                    <button @click="goToLevel(1, selectedCat)" class="text-gray-400 hover:text-blue-400 transition-colors whitespace-nowrap" x-text="selectedCat"></button>
+                    <button @click="goToLevel(1, selectedCat)" class="text-gray-400 hover:text-blue-400 transition-colors capitalize whitespace-nowrap" x-text="selectedCat"></button>
                 </div>
             </template>
             
@@ -73,97 +70,81 @@
             </template>
         </div>
 
-        <!-- Banner de Status de Busca -->
-        <div x-cloak x-show="isSearching" class="mb-6 bg-blue-900/20 border border-blue-800 p-4 rounded-lg flex items-center justify-between">
+        <div x-cloak x-show="isSearching" class="mb-6 bg-blue-900/20 border border-blue-800/60 p-4 rounded-lg flex items-center justify-between animate-fadeIn">
             <span class="text-blue-400 font-medium">
-                Mostrando resultados para: <span class="text-white font-bold tracking-wide" x-text="searchQuery"></span>
+                Resultados encontrados para: <span class="text-white font-bold tracking-wide" x-text="searchQuery"></span>
             </span>
-            <span class="text-xs font-bold bg-blue-600 text-white px-2 py-1 rounded" x-text="searchResults.length + ' encontrados'"></span>
+            <span class="text-xs font-bold bg-blue-600 text-white px-2 py-1 rounded shadow" x-text="searchResults.length + ' itens'"></span>
         </div>
 
-        <!-- Loading / Tela de Carregamento -->
         <div x-show="isLoading" class="flex flex-col items-center justify-center py-24">
             <div class="animate-spin rounded-full h-14 w-14 border-t-2 border-b-2 border-blue-500 mb-6"></div>
             <p class="text-gray-400 text-lg animate-pulse font-medium">Sincronizando com a nuvem...</p>
         </div>
 
-        <!-- ========================================== -->
-        <!-- TELAS DE NAVEGAÇÃO (HIERARQUIA)            -->
-        <!-- ========================================== -->
-
-        <!-- NÍVEL 0: CATEGORIAS (Caixas, Carros, Armários) -->
         <div x-cloak x-show="!isLoading && !isSearching && level === 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             <template x-for="cat in categories" :key="cat">
-                <div @click="goToLevel(1, cat)" class="card-hover bg-gray-800 rounded-xl p-8 border border-gray-700 flex flex-col items-center justify-center min-h-[160px] text-center group">
-                    <div class="bg-gray-700/50 p-4 rounded-full mb-4 group-hover:bg-blue-900/30 group-hover:text-blue-400 transition-colors">
-                        <!-- Ícone de Pasta Genérico -->
+                <div @click="goToLevel(1, cat)" class="card-folder bg-gray-800/90 rounded-xl p-8 border border-gray-700/80 flex flex-col items-center justify-center min-h-[160px] text-center group">
+                    <div class="bg-gray-700/40 p-4 rounded-full mb-4 group-hover:bg-blue-900/40 group-hover:text-blue-400 transition-colors text-gray-400">
                         <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
                     </div>
-                    <h2 class="text-2xl font-bold text-white group-hover:text-blue-400 transition-colors" x-text="cat"></h2>
-                    <p class="text-gray-500 text-sm mt-2 font-medium">Visualizar inventário</p>
+                    <h2 class="text-2xl font-bold text-white capitalize group-hover:text-blue-400 transition-colors" x-text="cat"></h2>
+                    <p class="text-gray-500 text-sm mt-1.5 font-medium">Abrir seção</p>
                 </div>
             </template>
         </div>
 
-        <!-- NÍVEL 1: MÓVEIS / CONTAINERS (Carro 1, Caixa 2, etc) -->
         <div x-cloak x-show="!isLoading && !isSearching && level === 1" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <template x-for="loc in locations" :key="loc">
-                <div @click="goToLevel(2, selectedCat, loc)" class="card-hover bg-gray-800 rounded-xl p-6 border border-gray-700 flex flex-col items-center text-center group relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <svg class="w-12 h-12 text-gray-500 mb-4 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                <div @click="goToLevel(2, selectedCat, loc)" class="card-folder bg-gray-800/90 rounded-xl p-6 border border-gray-700/80 flex flex-col items-center text-center group relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <svg class="w-12 h-12 text-gray-500 mb-3 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                     <h2 class="text-xl font-bold text-white" x-text="loc"></h2>
                     <p class="text-gray-500 text-sm mt-1">Ver compartimentos</p>
                 </div>
             </template>
         </div>
 
-        <!-- NÍVEL 2: SUB-CONTAINERS / GAVETAS (Gaveta A, Prateleira 1) -->
         <div x-cloak x-show="!isLoading && !isSearching && level === 2" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <template x-for="sub in subLocations" :key="sub">
-                <div @click="goToLevel(3, selectedCat, selectedLoc, sub)" class="card-hover bg-gray-800 rounded-xl p-6 border border-gray-700 flex flex-col items-center text-center group">
+                <div @click="goToLevel(3, selectedCat, selectedLoc, sub)" class="card-folder bg-gray-800/90 rounded-xl p-6 border border-gray-700/80 flex flex-col items-center text-center group">
                     <svg class="w-10 h-10 text-gray-600 mb-3 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
                     <h2 class="text-lg font-bold text-gray-200 group-hover:text-white" x-text="sub"></h2>
-                    <p class="text-blue-500 text-xs font-medium mt-2 uppercase tracking-wider">Abrir</p>
+                    <p class="text-blue-500 text-xs font-bold mt-2.5 uppercase tracking-wider">Visualizar ferramentas</p>
                 </div>
             </template>
         </div>
 
-        <!-- NÍVEL 3: GALERIA FINAL DE FERRAMENTAS (E RESULTADOS DE BUSCA) -->
         <div x-cloak x-show="!isLoading && (isSearching || level === 3)" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            
             <template x-for="tool in (isSearching ? searchResults : toolsInSubLocation)" :key="tool.id">
-                <div class="bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-md hover:border-blue-500 hover:shadow-lg hover:-translate-y-1 transform transition-all duration-200 flex flex-col h-full group">
+                <div class="card-tool bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-md flex flex-col h-full group">
                     
-                    <!-- Imagem da Ferramenta -->
-                    <div class="h-48 bg-gray-900 flex items-center justify-center relative border-b border-gray-700">
+                    <div class="h-48 bg-gray-900 flex items-center justify-center relative border-b border-gray-700/60 p-2">
                         <template x-if="tool.img">
-                            <img :src="tool.img" :alt="tool.name" class="w-full h-full object-cover group-hover:opacity-90 transition-opacity">
+                            <img :src="tool.img" :alt="tool.name" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200">
                         </template>
                         <template x-if="!tool.img">
                             <div class="flex flex-col items-center text-gray-600">
-                                <svg class="w-10 h-10 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                <span class="text-sm font-medium">Sem imagem</span>
+                                <svg class="w-10 h-10 mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <span class="text-xs font-semibold">Sem foto cadastrada</span>
                             </div>
                         </template>
                         
-                        <!-- Tag "SPECIAL" -->
                         <template x-if="tool.special">
-                            <span class="absolute top-3 right-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow-md uppercase tracking-wider z-10">Special</span>
+                            <span class="absolute top-3 right-3 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-md uppercase tracking-widest z-10">Special</span>
                         </template>
                     </div>
 
-                    <!-- Dados da Ferramenta -->
-                    <div class="p-5 flex-grow flex flex-col relative bg-gray-800">
-                        <h3 class="text-lg font-bold text-white mb-1 leading-tight" x-text="tool.name"></h3>
-                        <p class="text-blue-400 text-sm font-mono mb-4 bg-blue-900/20 inline-block self-start px-2 py-0.5 rounded border border-blue-800/50" x-text="tool.code"></p>
+                    <div class="p-5 flex-grow flex flex-col bg-gray-800/40">
+                        <h3 class="text-base font-bold text-white mb-1.5 leading-tight group-hover:text-blue-400 transition-colors" x-text="tool.name"></h3>
+                        <p class="text-blue-400 text-xs font-mono mb-4 bg-blue-950/40 inline-block self-start px-2 py-1 rounded border border-blue-900/40 shadow-inner" x-text="tool.code"></p>
                         
-                        <!-- Localização Exata -->
-                        <div class="mt-auto pt-3 border-t border-gray-700 flex flex-col space-y-1 text-sm text-gray-400">
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 flex-shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                                <span x-text="tool.loc"></span>
+                        <div class="mt-auto pt-3 border-t border-gray-700/60 flex flex-col space-y-1 text-xs text-gray-400">
+                            <div class="flex items-center font-medium">
+                                <svg class="w-3.5 h-3.5 mr-2 flex-shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                <span class="capitalize" x-text="tool.cat + ' ➔ ' + tool.loc"></span>
                             </div>
-                            <div class="flex items-center text-xs">
+                            <div class="flex items-center text-gray-500 font-mono">
                                 <svg class="w-3 h-3 mr-2.5 ml-0.5 flex-shrink-0 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                 <span x-text="tool.sub"></span>
                             </div>
@@ -174,16 +155,14 @@
             </template>
         </div>
 
-        <!-- Mensagens de "Vazio" -->
-        <div x-cloak x-show="!isLoading && isSearching && searchResults.length === 0" class="text-center py-20 bg-gray-800/50 rounded-xl border border-gray-700 mt-6 shadow-sm">
-            <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <h3 class="text-xl font-medium text-gray-300">Nenhuma ferramenta encontrada</h3>
-            <p class="text-gray-500 mt-2">Tente buscar por um termo diferente.</p>
+        <div x-cloak x-show="!isLoading && isSearching && searchResults.length === 0" class="text-center py-20 bg-gray-800/30 rounded-xl border border-gray-700/60 mt-6 shadow-sm">
+            <svg class="w-14 h-14 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <h3 class="text-lg font-medium text-gray-300">Nenhum registro localizado</h3>
+            <p class="text-gray-500 text-sm mt-1">Revise os termos inseridos ou tente redefinir sua busca.</p>
         </div>
 
     </div>
 
-    <!-- O Cérebro do Aplicativo (Lógica Alpine + Sheets) -->
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('setupApp', () => ({
@@ -191,7 +170,7 @@
                 isLoading: true,
                 searchQuery: '',
                 
-                // Variáveis de Controle de Estado (Hierarquia)
+                // Estados de Controle das Camadas
                 level: 0,
                 selectedCat: null,
                 selectedLoc: null,
@@ -202,12 +181,12 @@
                     
                     try {
                         const response = await fetch(csvUrl);
-                        if (!response.ok) throw new Error("Falha na requisição da rede.");
+                        if (!response.ok) throw new Error("A resposta da rede não foi satisfatória.");
                         const csvText = await response.text();
                         this.parsePlanilha(csvText);
                     } catch (erro) {
-                        console.error("Erro ao puxar a planilha:", erro);
-                        alert("Não foi possível conectar ao banco de ferramentas.");
+                        console.error("Falha de comunicação com o banco:", erro);
+                        alert("Não foi possível carregar os registros. Tente reiniciar a aplicação.");
                     } finally {
                         this.isLoading = false;
                     }
@@ -220,39 +199,53 @@
                     for (let i = 1; i < linhas.length; i++) {
                         if (!linhas[i].trim()) continue;
                         
-                        const colunas = linhas[i].split(',');
+                        // Máquina de estado para quebrar o CSV respeitando vírgulas dentro de aspas
+                        const colunas = [];
+                        let campoAtual = '';
+                        let dentroDeAspas = false;
+                        const linhaCompleta = linhas[i];
                         
-                        // Parse inteligente para não deixar gavetas vazias quebrando o layout
-                        const catRaw = colunas[2] ? colunas[2].trim() : '';
-                        const locRaw = colunas[3] ? colunas[3].trim() : '';
-                        const subRaw = colunas[4] ? colunas[4].trim() : '';
+                        for (let j = 0; j < linhaCompleta.length; j++) {
+                            const char = linhaCompleta[j];
+                            if (char === '"') {
+                                dentroDeAspas = !dentroDeAspas;
+                            } else if (char === ',' && !dentroDeAspas) {
+                                colunas.push(campoAtual.trim());
+                                campoAtual = '';
+                            } else {
+                                campoAtual += char;
+                            }
+                        }
+                        colunas.push(campoAtual.trim());
+                        
+                        // Limpa as aspas residuais das extremidades dos campos
+                        const limpos = colunas.map(c => c.replace(/^"|"$/g, '').trim());
+                        
+                        const catRaw = limpos[2] ? limpos[2] : '';
+                        const locRaw = limpos[3] ? limpos[3] : '';
+                        const subRaw = limpos[4] ? limpos[4] : '';
                         
                         ferramentas.push({
                             id: i,
-                            name: colunas[0] ? colunas[0].trim() : 'N/A',
-                            code: colunas[1] ? colunas[1].trim() : 'N/A',
-                            cat: catRaw !== '' ? catRaw : 'Sem Categoria',
-                            loc: locRaw !== '' ? locRaw : 'Sem Local',
+                            name: limpos[0] ? limpos[0] : 'N/A',
+                            code: limpos[1] ? limpos[1] : 'N/A',
+                            cat: catRaw !== '' ? catRaw.toLowerCase() : 'Sem Categoria',
+                            loc: locRaw !== '' ? locRaw : 'Sem Móvel',
                             sub: (subRaw !== '' && subRaw.toUpperCase() !== 'N/A') ? subRaw : 'Sem Divisão',
-                            img: colunas[5] ? colunas[5].trim() : '',
-                            special: colunas[6] && colunas[6].trim().toUpperCase() === 'VERDADEIRO'
+                            img: limpos[5] ? limpos[5] : '',
+                            special: limpos[6] && limpos[6].toUpperCase() === 'VERDADEIRO'
                         });
                     }
                     this.toolsList = ferramentas;
                 },
 
-                // Função Mestra de Navegação
                 goToLevel(targetLevel, cat = null, loc = null, sub = null) {
-                    this.searchQuery = ''; // Limpa a busca ao navegar nas pastas
+                    this.searchQuery = ''; // Reseta a busca para preservar o estado ao navegar manual
                     this.level = targetLevel;
                     this.selectedCat = cat;
                     this.selectedLoc = loc;
                     this.selectedSub = sub;
                 },
-
-                // ==========================================
-                // COMPUTED PROPERTIES (Getters)
-                // ==========================================
 
                 get isSearching() {
                     return this.searchQuery.trim().length > 0;
@@ -260,20 +253,18 @@
 
                 get searchResults() {
                     if (!this.isSearching) return [];
-                    const q = this.searchQuery.toLowerCase();
+                    const query = this.searchQuery.toLowerCase();
                     return this.toolsList.filter(t => 
-                        t.name.toLowerCase().includes(q) || 
-                        t.code.toLowerCase().includes(q)
+                        t.name.toLowerCase().includes(query) || 
+                        t.code.toLowerCase().includes(query)
                     );
                 },
 
                 get categories() {
-                    // Retorna lista única de categorias
                     return [...new Set(this.toolsList.map(t => t.cat))].filter(Boolean).sort();
                 },
 
                 get locations() {
-                    // Retorna lista única de móveis dentro da categoria selecionada
                     return [...new Set(this.toolsList
                         .filter(t => t.cat === this.selectedCat)
                         .map(t => t.loc)
@@ -281,7 +272,6 @@
                 },
 
                 get subLocations() {
-                    // Retorna lista única de gavetas dentro do móvel selecionado
                     return [...new Set(this.toolsList
                         .filter(t => t.cat === this.selectedCat && t.loc === this.selectedLoc)
                         .map(t => t.sub)
@@ -289,7 +279,6 @@
                 },
 
                 get toolsInSubLocation() {
-                    // Retorna as ferramentas finais do local exato
                     return this.toolsList.filter(t => 
                         t.cat === this.selectedCat && 
                         t.loc === this.selectedLoc && 
