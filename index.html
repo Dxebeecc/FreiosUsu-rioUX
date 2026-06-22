@@ -283,7 +283,7 @@
                     return icons[index];
                 },
 
-                // --- ESTRUTURA BASE (Molde simplificado para futuros projetos) ---
+                // --- ESTRUTURA BASE ---
                 currentModules() {
                     let stepsData = [];
                     stepsData[0] = [{ id: 'ref_prep', title: 'Módulo de Preparação', items: [{ id: 'prep_1', text: 'Esta é uma etapa de exemplo de preparação para o projeto.' }] }];
@@ -393,7 +393,7 @@
                 </div>
             </div>
 
-            <template x-for="tool in filteredTools" :key="tool.code + tool.loc + tool.sub">
+            <template x-for="(tool, index) in filteredTools" :key="index + '_' + tool.code">
                 <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
                     <div class="h-40 bg-[#f4f5f7] flex items-center justify-center p-4 border-b border-gray-100 relative">
                         <img x-show="tool.image" :src="tool.image" alt="Tool" class="max-h-full object-contain mix-blend-multiply">
