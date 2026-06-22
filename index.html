@@ -2,559 +2,167 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Setup LATAM - Motor Base</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acervo de Ferramentas</title>
     
+    <!-- Tailwind CSS (Framework de estilo direto no HTML para não precisar de arquivos separados) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <style> 
-        [x-cloak] { display: none !important; } 
-        .bg-latam-blue { background-color: #1a3683; }
-        .text-latam-blue { color: #1a3683; }
+    
+    <!-- Alpine.js (O motor do nosso App) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <style>
+        /* Estilização da barra de rolagem e prevenção de flashes na tela (x-cloak) */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        [x-cloak] { display: none !important; }
     </style>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans antialiased" x-data="setupApp()">
 
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Cabeçalho e Barra de Pesquisa -->
+        <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-white">Acervo de Ferramentas</h1>
+                <p class="text-gray-400 mt-1">Gestão customizada de fluxos e inventário</p>
+            </div>
+            
+            <div class="relative w-full md:w-96 flex items-center">
+                <input type="text" x-model="searchQuery" placeholder="Buscar por nome ou código..." 
+                       class="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm">
+                <!-- Ícone de limpar busca -->
+                <button x-show="searchQuery !== ''" @click="searchQuery = ''" class="absolute right-3 text-gray-400 hover:text-white">
+                    ✕
+                </button>
+            </div>
+        </header>
+
+        <!-- Abas de Navegação -->
+        <nav class="flex space-x-2 md:space-x-4 mb-8 overflow-x-auto pb-2 border-b border-gray-800 scrollbar-hide">
+            <button @click="selectedCategory = 'todas'" :class="selectedCategory === 'todas' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'" class="px-5 py-2.5 rounded-lg font-medium transition-all whitespace-nowrap">Tudo</button>
+            <button @click="selectedCategory = 'caixas'" :class="selectedCategory === 'caixas' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'" class="px-5 py-2.5 rounded-lg font-medium transition-all whitespace-nowrap">Caixas</button>
+            <button @click="selectedCategory = 'armarios'" :class="selectedCategory === 'armarios' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'" class="px-5 py-2.5 rounded-lg font-medium transition-all whitespace-nowrap">Armários</button>
+            <button @click="selectedCategory = 'carros'" :class="selectedCategory === 'carros' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'" class="px-5 py-2.5 rounded-lg font-medium transition-all whitespace-nowrap">Carros</button>
+        </nav>
+
+        <!-- Loading / Tela de Carregamento -->
+        <div x-show="isLoading" class="flex flex-col items-center justify-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+            <p class="text-gray-400 text-lg animate-pulse">Sincronizando com a nuvem...</p>
+        </div>
+
+        <!-- Galeria Principal -->
+        <div x-cloak x-show="!isLoading" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            
+            <!-- Loop iterando a galeria de forma segura usando um ID único (:key="tool.id") -->
+            <template x-for="tool in filteredTools" :key="tool.id">
+                <div class="bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-md hover:border-blue-500 hover:shadow-lg hover:-translate-y-1 transform transition-all duration-200 flex flex-col h-full group">
+                    
+                    <!-- Imagem da Ferramenta -->
+                    <div class="h-48 bg-gray-900 flex items-center justify-center relative border-b border-gray-700">
+                        <template x-if="tool.img">
+                            <img :src="tool.img" :alt="tool.name" class="w-full h-full object-cover group-hover:opacity-90 transition-opacity">
+                        </template>
+                        <template x-if="!tool.img">
+                            <div class="flex flex-col items-center text-gray-600">
+                                <svg class="w-10 h-10 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <span class="text-sm font-medium">Sem imagem</span>
+                            </div>
+                        </template>
+                        
+                        <!-- Tag "SPECIAL" para as ferramentas marcadas como VERDADEIRO -->
+                        <template x-if="tool.special">
+                            <span class="absolute top-3 right-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow-md uppercase tracking-wider">Special</span>
+                        </template>
+                    </div>
+
+                    <!-- Dados da Ferramenta -->
+                    <div class="p-5 flex-grow flex flex-col">
+                        <h3 class="text-lg font-bold text-white mb-1 leading-tight" x-text="tool.name"></h3>
+                        <p class="text-blue-400 text-sm font-mono mb-4 bg-blue-900/20 inline-block self-start px-2 py-0.5 rounded" x-text="tool.code"></p>
+                        
+                        <!-- Localização (Gavetas, Prateleiras, etc) -->
+                        <div class="mt-auto pt-3 border-t border-gray-700 flex items-start text-sm text-gray-400">
+                            <svg class="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <span class="leading-tight" x-text="tool.loc + (tool.sub && tool.sub !== 'N/A' && tool.sub !== '' ? ' • ' + tool.sub : '')"></span>
+                        </div>
+                    </div>
+
+                </div>
+            </template>
+        </div>
+
+        <!-- Mensagem caso a busca ou a aba não tenha resultados -->
+        <div x-cloak x-show="!isLoading && filteredTools.length === 0" class="text-center py-20 bg-gray-800 rounded-xl border border-gray-700 mt-6 shadow-sm">
+            <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <h3 class="text-xl font-medium text-gray-300">Nenhuma ferramenta encontrada</h3>
+            <p class="text-gray-500 mt-2">Tente buscar por um termo diferente ou mude de aba.</p>
+        </div>
+
+    </div>
+
+    <!-- O Cérebro do Aplicativo (Sincronização com o Google Sheets) -->
     <script>
         document.addEventListener('alpine:init', () => {
-            Alpine.data('appData', () => ({
-                screen: 'home',
-                model: 'Molde de Referência', 
-                cycle: '1',
-                step: 0,
-                activeModule: null, 
-                checked: {},
-                stepNames: ['Preparação', 'Execução', 'Documentação', 'Finalização'],
-                
-                modalOpen: false,
-                modalData: { imgUrl: '', manualPage: '', toolCode: '' },
-
-                // --- ESTADOS DA GALERIA ---
+            Alpine.data('setupApp', () => ({
+                toolsList: [],
+                isLoading: true,
                 searchQuery: '',
-                activeTab: 'all',
-                selectedContainer: null,
-                selectedSub: null,
+                selectedCategory: 'todas', 
 
-                // --- BANCO DE DADOS DO ACERVO DE FERRAMENTAS ---
-                toolsList: [
-                    // --- CAIXA 1 ---
-                    { name: 'Adaptor (Special Tool)', code: 'Q47963-T', cat: 'caixas', loc: 'Caixa 1', sub: 'Compartimento Superior', image: 'https://i.imgur.com/UOUvSSN.jpeg', special: true },
-                    { name: 'Compression Tool (A320)', code: 'F26693000-T', cat: 'caixas', loc: 'Caixa 1', sub: 'Compartimento Superior', image: 'https://i.imgur.com/reDKB9A.jpeg', special: true },
-                    { name: 'Installation Cone 1', code: 'Q47964-1-T', cat: 'caixas', loc: 'Caixa 1', sub: 'Compartimento Superior', image: '' },
-                    { name: 'Installation Cone 2', code: 'Q47965-T', cat: 'caixas', loc: 'Caixa 1', sub: 'Gaveta 1', image: '' },
-                    { name: 'Spatula (Espátula)', code: '89901-T', cat: 'caixas', loc: 'Caixa 1', sub: 'Compartimento Superior', image: '' },
-                    { name: 'Adaptação 3/4 Válvula Fitting Assembly', code: 'MY18011-T', cat: 'caixas', loc: 'Caixa 1', sub: 'Compartimento Superior', image: '' },
-                    { name: 'Soquete 3/4', code: 'MY46SQ085', cat: 'caixas', loc: 'Caixa 1', sub: 'Compartimento Superior', image: '' },
-                    { name: 'Extensor', code: 'MY46EX055', cat: 'caixas', loc: 'Caixa 1', sub: 'Compartimento Superior', image: '' },
-                    { name: 'Braço de Torque', code: 'MY46BF007', cat: 'caixas', loc: 'Caixa 1', sub: 'Compartimento Superior', image: '' },
-                    { name: 'Macete', code: 'MY46MA002', cat: 'caixas', loc: 'Caixa 1', sub: 'Compartimento Superior', image: '' },
-                    { name: 'Soquete 1/4', code: 'MY46SQ238', cat: 'caixas', loc: 'Caixa 1', sub: 'Gaveta 1', image: '' },
-                    { name: 'Alicate de Corte', code: 'MY46AL052', cat: 'caixas', loc: 'Caixa 1', sub: 'Gaveta 1', image: '' },
-                    { name: 'Alicate de Freno', code: 'MY46AL050', cat: 'caixas', loc: 'Caixa 1', sub: 'Gaveta 2', image: '' },
-                    { name: 'Chave Combinada 3/8', code: 'MY46CC030', cat: 'caixas', loc: 'Caixa 1', sub: 'Gaveta 3', image: '' },
-                    { name: 'Alicate para Anel Trava (Beta)', code: 'MY46AL079', cat: 'caixas', loc: 'Caixa 1', sub: 'Gaveta 4', image: '' },
-
-                    // --- CAIXA 2 ---
-                    { name: 'Adaptor (Special Tool)', code: 'Q47963-T', cat: 'caixas', loc: 'Caixa 2', sub: 'Compartimento Superior', image: 'https://i.imgur.com/UOUvSSN.jpeg', special: true },
-                    { name: 'Compression Tool', code: 'F26693000-T', cat: 'caixas', loc: 'Caixa 2', sub: 'Compartimento Superior', image: 'https://i.imgur.com/reDKB9A.jpeg', special: true },
-                    { name: 'Spatula (Espátula)', code: '89901-T', cat: 'caixas', loc: 'Caixa 2', sub: 'Compartimento Superior', image: '' },
-                    { name: 'Soquete 13/16', code: 'MY46SQ029', cat: 'caixas', loc: 'Caixa 2', sub: 'Compartimento Superior', image: '' },
-                    { name: 'Alicate para Anel (Beta)', code: 'MY46AL052', cat: 'caixas', loc: 'Caixa 2', sub: 'Gaveta 1', image: '' },
-                    { name: 'Alicate de Freno', code: 'MY46AL068', cat: 'caixas', loc: 'Caixa 2', sub: 'Gaveta 2', image: '' },
-
-                    // --- ARMÁRIO 1 ---
-                    { name: 'Caneta Pneumática', code: 'MY46CPN001', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira A', image: '' },
-                    { name: 'Relógio Comparador', code: 'RC0248', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira A', image: '' },
-                    { name: 'Relógio Comparador', code: 'RA0022', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira A', image: '' },
-                    { name: 'Imicro 50-63mm', code: 'IM5630', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira A', image: '' },
-                    { name: 'Base Magnética', code: 'MY46BM001', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira A', image: '' },
-                    { name: 'Rebitadeira Pneumática', code: 'MY46RBP001', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira A', image: '' },
-                    { name: 'Rebitadeira Pneumática', code: 'MY46RBP002', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira A', image: '' },
-                    { name: 'Arco de Serra', code: 'MY46AC003', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira B', image: '' },
-                    { name: 'Torquímetro 50-250 LBF.FT', code: 'TO0290', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira B', image: '' },
-                    { name: 'Paquímetro de Profundidade', code: 'PA0101', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira B', image: '' },
-                    { name: 'Torquímetro 10 - 50 LBF. IN', code: 'TO0288', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira B', image: '' },
-                    { name: 'Torquímetro 40 - 200 LBF. IN', code: 'TO0894', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira B', image: '' },
-                    { name: 'Torquímetro Analógico 0 - 300 LBF. IN', code: 'TO0906', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira B', image: '' },
-                    { name: 'Torquímetro 200 - 1000 LBF. IN', code: 'TO0397', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira B', image: '' },
-                    { name: 'Corta Tubos', code: 'MY46CT001', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '' },
-                    { name: 'Corta Tubos', code: 'MY46CT002', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '' },
-                    { name: 'Pinças', code: 'N/A', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '' },
-                    { name: 'Lima Agulha', code: 'N/A', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '' },
-                    { name: 'Punção de Tipagem', code: 'N/A', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '' },
-                    { name: 'Alicate 5 Posições', code: 'MY46AL063', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '' },
-                    { name: 'Calibrador de Folga', code: 'CF0170', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '' },
-                    { name: 'Calibrador de Folga', code: 'CF0172', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '' },
-                    { name: 'Tesoura 10"', code: 'MY46TS001', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '' },
-                    { name: 'Ferramenta de Fixação dos Bolts A320/A321', code: 'MY46037-T', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '', special: true },
-                    { name: 'Lima', code: 'MY46LI001', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '' },
-                    { name: 'Calibrador GO/NO GO', code: 'N/A', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '' },
-                    { name: 'Paquímetro Digital', code: 'PA9886', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '' },
-                    { name: 'Paquímetro Digital', code: 'PA0396', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '' },
-                    { name: 'Trena', code: 'MY46TR001', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '' },
-                    { name: 'Castanhas de Polimento', code: 'PENDENTE', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira C', image: '' },
-                    { name: 'Haste Telescópica', code: 'PMF119', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira D', image: '' },
-                    { name: 'Proteção p/ Jateamento de Pistões', code: 'MY46048-T', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira D', image: '', special: true },
-                    { name: 'Caixa de Brocas', code: 'N/A', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira D', image: '' },
-                    { name: 'Furadeira Pneumática 90°', code: 'MY46FUR002', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira D', image: '' },
-                    { name: 'Furadeira Pneumática', code: 'MY46FUR001', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira D', image: '' },
-                    { name: 'Lixadeira Pneumática', code: 'MY46LP001', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira D', image: '' },
-                    { name: 'Parafusadeira Elétrica', code: 'MY46PE001', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira D', image: '' },
-                    { name: 'Parafusadeira Elétrica', code: 'MY46PE002', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira D', image: '' },
-                    { name: 'Soprador Térmico', code: 'GHG180', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira E', image: '' },
-                    { name: 'Escovas de Aço', code: 'N/A', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira E', image: '' },
-                    { name: 'Manômetro Back-Up (Rotativo) 1', code: 'RESERVA', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira E', image: '' },
-                    { name: 'Manômetro Back-Up (Rotativo) 2', code: 'RESERVA', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira E', image: '' },
-                    { name: 'Manômetro Back-Up (Rotativo) 3', code: 'RESERVA', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira E', image: '' },
-                    { name: 'Manômetro Back-Up (Rotativo) 4', code: 'RESERVA', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira E', image: '' },
-                    { name: 'Lanterna', code: 'N/A', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira E', image: '' },
-                    { name: 'Insulation Test Cable', code: 'GS47703', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira E', image: '', special: true },
-                    { name: 'Bonding Test Cable', code: 'GS47704', cat: 'armarios', loc: 'Armário 1', sub: 'Prateleira E', image: '', special: true },
-
-                    // --- ARMÁRIO 2 ---
-                    { name: 'Caneta Pneumática', code: 'MY46CPN001', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira A', image: '' },
-                    { name: 'Relógio Comparador', code: 'RC0248', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira A', image: '' },
-                    { name: 'Relógio Comparador', code: 'RA0022', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira A', image: '' },
-                    { name: 'Imicro 50-63mm', code: 'IM5630', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira A', image: '' },
-                    { name: 'Base Magnética', code: 'MY46BM001', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira A', image: '' },
-                    { name: 'Rebitadeira Pneumática', code: 'MY46RBP001', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira A', image: '' },
-                    { name: 'Rebitadeira Pneumática', code: 'MY46RBP002', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira A', image: '' },
-                    { name: 'Arco de Serra', code: 'MY46AC003', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira B', image: '' },
-                    { name: 'Torquímetro 50-250 LBF.FT', code: 'TO0290', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira B', image: '' },
-                    { name: 'Paquímetro de Profundidade', code: 'PA0101', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira B', image: '' },
-                    { name: 'Torquímetro 10 - 50 LBF. IN', code: 'TO0288', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira B', image: '' },
-                    { name: 'Torquímetro 40 - 200 LBF. IN', code: 'TO0894', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira B', image: '' },
-                    { name: 'Torquímetro Analógico 0 - 300 LBF. IN', code: 'TO0906', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira B', image: '' },
-                    { name: 'Torquímetro 200 - 1000 LBF. IN', code: 'TO0397', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira B', image: '' },
-                    { name: 'Corta Tubos', code: 'MY46CT001', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '' },
-                    { name: 'Corta Tubos', code: 'MY46CT002', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '' },
-                    { name: 'Pinças', code: 'N/A', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '' },
-                    { name: 'Lima Agulha', code: 'N/A', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '' },
-                    { name: 'Punção de Tipagem', code: 'N/A', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '' },
-                    { name: 'Alicate 5 Posições', code: 'MY46AL063', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '' },
-                    { name: 'Calibrador de Folga', code: 'CF0170', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '' },
-                    { name: 'Calibrador de Folga', code: 'CF0172', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '' },
-                    { name: 'Tesoura 10"', code: 'MY46TS001', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '' },
-                    { name: 'Ferramenta de Fixação dos Bolts A320/A321', code: 'MY46037-T', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '', special: true },
-                    { name: 'Lima', code: 'MY46LI001', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '' },
-                    { name: 'Calibrador GO/NO GO', code: 'N/A', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '' },
-                    { name: 'Paquímetro Digital', code: 'PA9886', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '' },
-                    { name: 'Paquímetro Digital', code: 'PA0396', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '' },
-                    { name: 'Trena', code: 'MY46TR001', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '' },
-                    { name: 'Castanhas de Polimento', code: 'PENDENTE', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira C', image: '' },
-                    { name: 'Haste Telescópica', code: 'PMF119', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira D', image: '' },
-                    { name: 'Proteção p/ Jateamento de Pistões', code: 'MY46048-T', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira D', image: '', special: true },
-                    { name: 'Caixa de Brocas', code: 'N/A', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira D', image: '' },
-                    { name: 'Furadeira Pneumática 90°', code: 'MY46FUR002', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira D', image: '' },
-                    { name: 'Furadeira Pneumática', code: 'MY46FUR001', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira D', image: '' },
-                    { name: 'Lixadeira Pneumática', code: 'MY46LP001', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira D', image: '' },
-                    { name: 'Parafusadeira Elétrica', code: 'MY46PE001', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira D', image: '' },
-                    { name: 'Parafusadeira Elétrica', code: 'MY46PE002', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira D', image: '' },
-                    { name: 'Soprador Térmico', code: 'GHG180', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira E', image: '' },
-                    { name: 'Escovas de Aço', code: 'N/A', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira E', image: '' },
-                    { name: 'Manômetro Back-Up (Rotativo) 1', code: 'RESERVA', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira E', image: '' },
-                    { name: 'Manômetro Back-Up (Rotativo) 2', code: 'RESERVA', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira E', image: '' },
-                    { name: 'Manômetro Back-Up (Rotativo) 3', code: 'RESERVA', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira E', image: '' },
-                    { name: 'Manômetro Back-Up (Rotativo) 4', code: 'RESERVA', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira E', image: '' },
-                    { name: 'Lanterna', code: 'N/A', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira E', image: '' },
-                    { name: 'Insulation Test Cable', code: 'GS47703', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira E', image: '', special: true },
-                    { name: 'Bonding Test Cable', code: 'GS47704', cat: 'armarios', loc: 'Armário 2', sub: 'Prateleira E', image: '', special: true }
-                ],
-
-                // --- LÓGICA REFINADA DA GALERIA ---
-                handleSearch() {
-                    if (this.searchQuery !== '') {
-                        this.activeTab = 'all';
-                        this.selectedContainer = null;
-                        this.selectedSub = null;
+                async init() {
+                    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRHBw7M7f58VdQOb22lLEl6759ApiWB0fFHdqU1I8p45seWfxR7C-_X5tBGmTw4-ErnJaurfch2v3Bw/pub?gid=1418929880&single=true&output=csv';
+                    
+                    try {
+                        const response = await fetch(csvUrl);
+                        if (!response.ok) throw new Error("Falha na requisição da rede.");
+                        const csvText = await response.text();
+                        this.parsePlanilha(csvText);
+                    } catch (erro) {
+                        console.error("Erro ao puxar a planilha:", erro);
+                        alert("Não foi possível conectar ao banco de ferramentas. Verifique sua conexão.");
+                    } finally {
+                        this.isLoading = false;
                     }
                 },
 
-                setTab(tab) {
-                    this.activeTab = tab;
-                    this.searchQuery = '';
-                    this.selectedContainer = null;
-                    this.selectedSub = null;
+                parsePlanilha(csvText) {
+                    const linhas = csvText.split(/\r?\n/);
+                    const ferramentas = [];
+                    
+                    for (let i = 1; i < linhas.length; i++) {
+                        if (!linhas[i].trim()) continue;
+                        
+                        // Divide usando Expressão Regular para não quebrar caso haja vírgulas dentro do texto da planilha
+                        const colunas = linhas[i].split(',');
+                        
+                        ferramentas.push({
+                            id: i, // ID único gerado a partir do número da linha
+                            name: colunas[0] ? colunas[0].trim() : 'N/A',
+                            code: colunas[1] ? colunas[1].trim() : 'N/A',
+                            cat: colunas[2] ? colunas[2].trim().toLowerCase() : '',
+                            loc: colunas[3] ? colunas[3].trim() : '',
+                            sub: colunas[4] ? colunas[4].trim() : '',
+                            img: colunas[5] ? colunas[5].trim() : '',
+                            special: colunas[6] && colunas[6].trim().toUpperCase() === 'VERDADEIRO'
+                        });
+                    }
+                    this.toolsList = ferramentas;
                 },
 
                 get filteredTools() {
-                    let list = this.toolsList;
-                    
-                    if (this.searchQuery !== '') {
-                        const q = this.searchQuery.toLowerCase();
-                        return list.filter(t => t.name.toLowerCase().includes(q) || t.code.toLowerCase().includes(q));
-                    }
-                    
-                    if (this.activeTab !== 'all') {
-                        list = list.filter(t => t.cat === this.activeTab);
-                        
-                        if (this.selectedContainer) {
-                            list = list.filter(t => t.loc === this.selectedContainer);
-                            
-                            if (this.selectedSub) {
-                                list = list.filter(t => t.sub === this.selectedSub);
-                            }
-                        }
-                    }
-                    return list;
-                },
-
-                get showToolCards() {
-                    return this.searchQuery !== '' || this.activeTab === 'all' || (this.selectedContainer !== null && this.selectedSub !== null);
-                },
-
-                get uniqueContainers() {
-                    const filtered = this.toolsList.filter(t => t.cat === this.activeTab);
-                    return [...new Set(filtered.map(t => t.loc))];
-                },
-
-                get uniqueSubLocations() {
-                    if (!this.selectedContainer) return [];
-                    const filtered = this.toolsList.filter(t => t.loc === this.selectedContainer);
-                    return [...new Set(filtered.map(t => t.sub))];
-                },
-
-                openLocationModalByCode(code) {
-                    if(!code) return;
-                    const cleanCode = code.replace('-T', '').split(' / ')[0].trim().toLowerCase();
-                    const tool = this.toolsList.find(t => t.code.toLowerCase().includes(cleanCode));
-                    if (tool) {
-                        this.screen = 'gallery';
-                        this.searchQuery = tool.code;
-                        window.scrollTo(0, 0);
-                    } else {
-                        alert("Ferramenta mapeada na caixa padrão da oficina.");
-                    }
-                },
-
-                // --- CONTROLE DO APP ---
-                startApp() {
-                    this.screen = 'checklist';
-                    this.step = 0;
-                    this.checked = {};
-                    window.scrollTo(0, 0);
-                },
-
-                openGallery() {
-                    this.screen = 'gallery';
-                    this.searchQuery = '';
-                    this.activeTab = 'all';
-                    this.selectedContainer = null;
-                    this.selectedSub = null;
-                    window.scrollTo(0, 0);
-                },
-
-                finishApp() {
-                    if(this.isStepComplete()){
-                        alert("Projeto finalizado com sucesso!");
-                        this.screen = 'home';
-                        window.scrollTo(0, 0);
-                    }
-                },
-
-                openModule(module) {
-                    this.activeModule = module;
-                    this.screen = 'module';
-                    window.scrollTo(0, 0);
-                },
-
-                closeModule() {
-                    this.activeModule = null;
-                    this.screen = 'checklist';
-                    window.scrollTo(0, 0);
-                },
-
-                toggleCheck(id) { this.checked[id] = !this.checked[id]; },
-                openModalImage(refData) { this.modalData = refData; this.modalOpen = true; },
-                closeModalImage() { this.modalOpen = false; },
-                isModuleComplete(module) { return module?.items?.every(item => this.checked[item.id]) || false; },
-
-                isStepComplete() {
-                    const modules = this.currentModules();
-                    if(!modules || modules.length === 0) return false;
-                    return modules.every(m => this.isModuleComplete(m));
-                },
-
-                getStepIcon(index) {
-                    const icons = [
-                        '<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1-1-1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
-                        '<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
-                        '<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>',
-                        '<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>'
-                    ];
-                    return icons[index];
-                },
-
-                // --- ESTRUTURA BASE ---
-                currentModules() {
-                    let stepsData = [];
-                    stepsData[0] = [{ id: 'ref_prep', title: 'Módulo de Preparação', items: [{ id: 'prep_1', text: 'Esta é uma etapa de exemplo de preparação para o projeto.' }] }];
-                    stepsData[1] = [
-                        { 
-                            id: 'ref_exec', 
-                            title: 'Módulo de Execução', 
-                            items: [
-                                { id: 'exec_1', text: 'AVISO: Este é um exemplo de instrução com alerta crítico.', highlight: 'alert' },
-                                { 
-                                    id: 'exec_2', 
-                                    text: 'Exemplo de instrução conectada diretamente a uma ferramenta do acervo.', 
-                                    highlight: 'info',
-                                    reference: { btnText: 'Ref. Ferramenta', imgUrl: 'https://i.imgur.com/UOUvSSN.jpeg', manualPage: 'Manual Base Pág. 10', toolCode: 'Q47963-T' }
-                                }
-                            ] 
-                        }
-                    ];
-                    stepsData[2] = [{ id: 'ref_doc', title: 'Módulo de Registros', items: [{ id: 'doc_1', text: 'Exemplo de preenchimento de laudo ou documento.' }] }];
-                    stepsData[3] = [{ id: 'ref_fin', title: 'Módulo de Encerramento', items: [{ id: 'fin_1', text: 'Exemplo de ação de encerramento de projeto.' }] }];
-                    return stepsData[this.step] || [];
+                    return this.toolsList.filter(tool => {
+                        const matchCategory = this.selectedCategory === 'todas' || tool.cat === this.selectedCategory;
+                        const matchSearch = tool.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
+                                            tool.code.toLowerCase().includes(this.searchQuery.toLowerCase());
+                        return matchCategory && matchSearch;
+                    });
                 }
             }));
         });
     </script>
-</head>
-<body class="bg-[#f8f9fa] text-gray-800 font-sans antialiased min-h-screen" x-data="appData">
-
-    <div x-show="screen === 'home'" x-cloak class="min-h-screen flex flex-col items-center">
-        <div class="w-full max-w-md bg-white min-h-screen shadow-2xl flex flex-col">
-            <div class="bg-red-600 p-8 text-white text-center rounded-b-3xl shadow-lg relative">
-                <button @click="openGallery()" class="absolute top-6 right-6 p-2 bg-white/20 hover:bg-white/30 rounded-full transition" title="Acervo de Ferramentas">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                </button>
-                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3 opacity-90"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.2-1.1.6L3 8l5 5-3 3-3-1-1 1 2.5 4.5L11 23l1-1-1-3 3-3 5 5 1.2-.7c.4-.2.7-.6.6-1.1z"/></svg>
-                <h1 class="text-3xl font-extrabold tracking-tight">Criador de Projetos</h1>
-                <p class="text-red-100 mt-1 font-medium">Guia Operacional Base</p>
-            </div>
-
-            <div class="flex-1 p-6 flex flex-col justify-center space-y-8">
-                <div class="text-center text-gray-500 mb-4">
-                    <p>O motor do app está isolado.</p>
-                    <p class="text-sm">Clique abaixo para ver a estrutura de molde funcionando com a Galeria.</p>
-                </div>
-                <button @click="startApp()" class="w-full py-4 mt-8 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all duration-300 transform active:scale-95 bg-green-500 hover:bg-green-600 text-white shadow-lg">
-                    Testar Projeto Base 
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div x-show="screen === 'gallery'" x-cloak class="min-h-screen flex flex-col w-full max-w-md mx-auto bg-[#f8f9fa] relative shadow-2xl">
-        <div class="bg-latam-blue text-white p-4 pt-6 shadow-md sticky top-0 z-20">
-            <div class="flex items-center gap-4 mb-4">
-                <button @click="screen = 'home'" class="w-9 h-9 flex items-center justify-center bg-blue-800 rounded-full hover:bg-blue-700 transition transform active:scale-95">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                </button>
-                <div>
-                    <h1 class="font-black text-xl tracking-wide leading-tight">Acervo de Ferramentas</h1>
-                    <p class="text-blue-200 text-[10px] uppercase tracking-widest font-bold mt-0.5">Navegação Física</p>
-                </div>
-            </div>
-            
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg class="w-4 h-4 text-blue-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/></svg>
-                </div>
-                <input type="search" x-model="searchQuery" @input="handleSearch()" class="block w-full p-2.5 pl-10 text-sm text-white border border-transparent rounded-lg bg-[#152b69] placeholder-blue-300 focus:ring-blue-500 focus:border-blue-500 focus:bg-white focus:text-blue-900 transition-colors" placeholder="Pesquisar por nome ou P/N...">
-            </div>
-        </div>
-
-        <div x-show="searchQuery === ''" class="bg-white p-3 border-b border-gray-200 flex gap-2 overflow-x-auto text-xs font-bold shadow-sm">
-            <button @click="setTab('all')" :class="activeTab === 'all' ? 'bg-latam-blue text-white' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-md flex-shrink-0 transition-colors">Tudo</button>
-            <button @click="setTab('caixas')" :class="activeTab === 'caixas' ? 'bg-latam-blue text-white' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-md flex-shrink-0 transition-colors">Caixas</button>
-            <button @click="setTab('carros')" :class="activeTab === 'carros' ? 'bg-latam-blue text-white' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-md flex-shrink-0 transition-colors">Carros</button>
-            <button @click="setTab('armarios')" :class="activeTab === 'armarios' ? 'bg-latam-blue text-white' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-md flex-shrink-0 transition-colors">Armários</button>
-        </div>
-
-        <div x-show="searchQuery === '' && activeTab !== 'all' && !selectedContainer" class="p-4 grid grid-cols-2 gap-3">
-            <template x-for="container in uniqueContainers" :key="container">
-                <button @click="selectedContainer = container" class="bg-white border border-gray-200 p-5 rounded-xl shadow-sm text-left font-bold text-latam-blue hover:bg-gray-50 transition-colors h-20">
-                    <span x-text="container"></span>
-                </button>
-            </template>
-        </div>
-
-        <div x-show="searchQuery === '' && selectedContainer && !selectedSub" class="p-4 space-y-2">
-            <button @click="selectedContainer = null" class="text-xs font-bold text-red-600 flex items-center gap-1 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> Voltar
-            </button>
-            <template x-for="sub in uniqueSubLocations" :key="sub">
-                <button @click="selectedSub = sub" class="w-full bg-white border border-gray-200 p-4 rounded-xl shadow-sm text-left font-bold text-gray-700 hover:bg-gray-50 flex justify-between items-center transition-colors">
-                    <span x-text="sub"></span>
-                    <svg class="text-gray-400" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-                </button>
-            </template>
-        </div>
-
-        <div x-show="showToolCards" class="flex-1 p-4 pb-8 overflow-y-auto space-y-4">
-            <div x-show="searchQuery === '' && selectedSub" class="mb-4">
-                <button @click="selectedSub = null" class="text-xs font-bold text-red-600 flex items-center gap-1 mb-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> Voltar
-                </button>
-                <div class="bg-[#e2e8f0] text-gray-600 px-3 py-2 rounded-md text-[11px] font-bold uppercase tracking-wider w-full">
-                    LOCAL: <span x-text="selectedContainer"></span> &gt; <span x-text="selectedSub"></span>
-                </div>
-            </div>
-
-            <template x-for="(tool, index) in filteredTools" :key="index + '_' + tool.code">
-                <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
-                    <div class="h-40 bg-[#f4f5f7] flex items-center justify-center p-4 border-b border-gray-100 relative">
-                        <img x-show="tool.image" :src="tool.image" alt="Tool" class="max-h-full object-contain mix-blend-multiply">
-                        <div x-show="!tool.image" class="absolute inset-0 flex items-center justify-center bg-gray-200" style="background-image: url('https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400'); background-size: cover; background-position: center; opacity: 0.15;"></div>
-                        <div x-show="!tool.image" class="absolute inset-0 flex items-center justify-center">
-                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-100">Aguardando Foto</span>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1" x-text="tool.name"></p>
-                        <h3 class="text-lg font-black text-latam-blue mb-3" x-text="tool.code"></h3>
-                        <div class="bg-[#f8f9fa] border border-gray-100 p-2.5 rounded-lg flex items-center gap-2">
-                            <svg class="text-[#f97316] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                            <p class="text-xs text-gray-600">
-                                <span class="font-bold text-gray-900" x-text="tool.loc"></span> 
-                                <span class="font-bold mx-0.5">•</span> 
-                                <span x-text="tool.sub"></span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </template>
-            <div x-show="filteredTools.length === 0" class="text-center p-8 text-gray-400 font-bold text-sm">
-                <p>Nenhuma ferramenta encontrada.</p>
-            </div>
-        </div>
-    </div>
-
-    <div x-show="screen === 'checklist'" x-cloak class="min-h-screen flex flex-col w-full max-w-md mx-auto bg-gray-50 relative shadow-2xl">
-        <div class="bg-latam-blue text-white p-4 pt-6 shadow-md sticky top-0 z-20">
-            <div class="flex items-center justify-between mb-6">
-                <button @click="screen = 'home'" class="p-2 bg-blue-800 rounded-full hover:bg-blue-700 transition transform active:scale-95">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-                </button>
-                <div class="text-center">
-                    <h1 class="font-black text-xl tracking-wide" x-text="model"></h1>
-                </div>
-                <div class="w-9"></div>
-            </div>
-
-            <div class="flex justify-between relative px-4">
-                <div class="absolute top-1/2 left-8 right-8 h-1 bg-blue-800 transform -translate-y-1/2 rounded-full"></div>
-                <template x-for="(name, index) in stepNames" :key="index">
-                    <div class="flex flex-col items-center gap-1 bg-latam-blue px-2 relative z-10">
-                        <div :class="step === index ? 'border-white bg-red-600 text-white shadow-lg' : (step > index ? 'border-green-400 bg-green-400 text-latam-blue' : 'border-blue-800 bg-latam-blue text-blue-400')"
-                             class="w-10 h-10 rounded-full flex items-center justify-center border-4 transition-colors duration-300">
-                             <svg x-show="step > index" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-                             <div x-show="step <= index" x-html="getStepIcon(index)"></div>
-                        </div>
-                    </div>
-                </template>
-            </div>
-            <div class="text-center mt-3 text-sm font-bold text-white uppercase tracking-widest bg-latam-blue bg-opacity-50 py-1.5 mx-auto max-w-xs rounded-full" x-text="stepNames[step]"></div>
-        </div>
-
-        <div class="flex-1 p-5 pb-32 overflow-y-auto">
-            <div class="space-y-4">
-                <template x-for="module in currentModules()" :key="module.id">
-                    <button @click="openModule(module)" class="w-full flex justify-between items-center bg-white border border-gray-200 shadow-sm p-5 rounded-2xl text-latam-blue font-extrabold text-base uppercase tracking-wider transition-all transform hover:border-blue-300 active:scale-95 group">
-                        <div class="flex items-center gap-4 text-left">
-                            <div :class="isModuleComplete(module) ? 'bg-green-500 border-green-500 text-white' : 'bg-gray-50 border-gray-300 text-gray-300'" class="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors">
-                                <svg x-show="isModuleComplete(module)" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/></svg>
-                            </div>
-                            <span x-text="module.title" :class="isModuleComplete(module) ? 'text-green-700' : ''"></span>
-                        </div>
-                        <div class="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                            <svg class="w-5 h-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                        </div>
-                    </button>
-                </template>
-            </div>
-        </div>
-
-        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-6 shadow-2xl z-20">
-            <div class="max-w-md mx-auto flex justify-between gap-4">
-                <button @click="step = Math.max(0, step - 1)" :disabled="step === 0"
-                    :class="step === 0 ? 'bg-gray-50 text-gray-300 border border-gray-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 transform active:scale-95'"
-                    class="flex-1 py-4 px-4 rounded-2xl font-bold text-sm transition-all"> Voltar </button>
-                <button x-show="step < stepNames.length - 1" @click="step = Math.min(stepNames.length - 1, step + 1)"
-                    :class="isStepComplete() ? 'bg-latam-blue text-white hover:bg-blue-800 shadow-lg transform active:scale-95' : 'bg-blue-50 text-blue-300 border border-blue-100'"
-                    class="flex-none w-2/3 py-4 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all"> Avançar Etapa <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
-                <button x-show="step === stepNames.length - 1" @click="finishApp()"
-                    :class="isStepComplete() ? 'bg-green-500 text-white shadow-lg transform active:scale-95' : 'bg-green-50 text-green-200 border border-green-100'"
-                    class="flex-none w-2/3 py-4 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all"> Finalizar Projeto <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></button>
-            </div>
-        </div>
-    </div>
-
-    <div x-show="screen === 'module'" x-cloak class="min-h-screen flex flex-col w-full max-w-md mx-auto bg-gray-50 relative shadow-2xl">
-        <div class="bg-white p-4 pt-6 shadow-sm sticky top-0 z-20 border-b border-gray-200">
-            <div class="flex items-center gap-4">
-                <button @click="closeModule()" class="p-2 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition transform active:scale-95">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                </button>
-                <div>
-                    <p class="text-xs font-bold text-blue-600 uppercase tracking-widest" x-text="stepNames[step]"></p>
-                    <h2 class="text-lg font-black text-gray-800 leading-tight" x-text="activeModule?.title || ''"></h2>
-                </div>
-            </div>
-        </div>
-
-        <div class="flex-1 p-4 pb-32 overflow-y-auto space-y-4">
-            <template x-for="item in (activeModule?.items || [])" :key="item.id">
-                <div :class="checked[item.id] ? 'bg-green-50 border-green-500 transform scale-95 opacity-75' : (item.highlight === 'alert' ? 'bg-orange-50 bg-opacity-80 border-orange-300 shadow-sm' : (item.highlight === 'info' ? 'bg-blue-50 bg-opacity-80 border-blue-300 shadow-sm' : 'bg-white border-gray-200 shadow-sm'))"
-                     class="p-4 rounded-xl border-2 flex gap-4 items-start transition-all duration-200">
-                    <div @click="toggleCheck(item.id)" :class="checked[item.id] ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-gray-50'" class="mt-0.5 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center border-2 transition-colors cursor-pointer"><svg x-show="checked[item.id]" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg></div>
-                    <div class="flex-1 pt-0.5 flex flex-col gap-2">
-                        <p :class="checked[item.id] ? 'text-gray-500 line-through' : 'text-gray-800 font-semibold'" class="text-sm leading-snug">
-                            <span x-text="item.text"></span>
-                        </p>
-                        
-                        <div class="flex flex-wrap items-center gap-2 mt-1">
-                            <template x-if="item.reference">
-                                <div class="flex gap-2 w-full mt-1">
-                                    <button @click="openModalImage(item.reference)" class="flex-1 inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors">
-                                        <svg style="width: 14px; height: 14px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                                        <span x-text="item.reference.btnText || 'Ver Referência'"></span>
-                                    </button>
-                                    <button @click="openLocationModalByCode(item.reference.toolCode)" class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-orange-100 text-orange-600 rounded-lg border border-orange-200 hover:bg-orange-200 transition transform active:scale-95 shadow-sm">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                    </button>
-                                </div>
-                            </template>
-                        </div>
-
-                    </div>
-                </div>
-            </template>
-        </div>
-
-        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-6 shadow-2xl z-20">
-            <div class="max-w-md mx-auto">
-                <button @click="closeModule()" :class="isModuleComplete(activeModule) ? 'bg-latam-blue text-white hover:bg-blue-800 shadow-lg' : 'bg-gray-200 text-gray-700'" class="w-full py-4 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all transform active:scale-95"><span x-text="isModuleComplete(activeModule) ? 'Módulo Concluído - Voltar' : 'Voltar para Lista'"></span></button>
-            </div>
-        </div>
-    </div>
-
-    <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300" style="background-color: rgba(15, 23, 42, 0.8);" @click.self="closeModalImage()">
-        <div class="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border flex flex-col" style="max-height: 85vh;">
-            <div class="bg-gray-900 text-white p-4 flex justify-between items-center">
-                <span class="font-extrabold text-xs uppercase tracking-widest text-gray-300">Apoio Visual / Tool</span>
-                <button @click="closeModalImage()" class="p-1 text-gray-400 hover:text-white rounded-full bg-gray-800"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-            </div>
-            <div class="flex-1 overflow-y-auto p-4 bg-gray-100 flex flex-col items-center justify-center" style="min-height: 250px;">
-                <img :src="modalData.imgUrl" class="max-w-full object-contain rounded-xl shadow-md border bg-white" style="max-height: 40vh;">
-            </div>
-            <div class="bg-white p-4 border-t space-y-2">
-                <div class="flex flex-col gap-2 text-xs">
-                    <div class="bg-gray-50 p-3 rounded-xl border w-full">
-                        <p class="text-gray-400 font-bold uppercase tracking-wider mb-1" style="font-size: 9px;">Manual Ref.</p>
-                        <p class="text-gray-800 font-bold break-words" x-text="modalData.manualPage"></p>
-                    </div>
-                    <div class="bg-blue-50 p-3 rounded-xl border border-blue-200 w-full">
-                        <p class="text-blue-500 font-bold uppercase tracking-wider mb-1" style="font-size: 9px;">CMM Tool / Part</p>
-                        <p class="text-blue-900 font-black break-words" x-text="modalData.toolCode"></p>
-                    </div>
-                </div>
-                <button @click="closeModalImage()" class="w-full py-3 mt-3 bg-blue-900 text-white font-bold text-sm rounded-xl">Fechar Referência</button>
-            </div>
-        </div>
-    </div>
-
 </body>
 </html>
