@@ -58,16 +58,56 @@
 </head>
 <body class="bg-latam-bg text-gray-200 font-sans antialiased min-h-screen flex flex-col selection:bg-latam-pink selection:text-white pb-24" x-data="setupApp()">
 
-    <!-- Header Fixo estilo App -->
-    <header class="glass-panel sticky top-0 z-40 border-b border-latam-border">
+    <!-- ==================== TELA SELEÇÃO DE OFICINA (ONBOARDING) ==================== -->
+    <div x-cloak x-show="isSelectingWorkshop" class="fixed inset-0 z-[100] flex items-center justify-center bg-latam-bg/95 p-4 backdrop-blur-md">
+        <div class="glass-panel border border-latam-border rounded-[32px] p-8 max-w-sm w-full shadow-2xl flex flex-col relative overflow-hidden transition-all transform scale-100">
+            <!-- Estilo de fundo -->
+            <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-latam-purple to-latam-pink"></div>
+            
+            <div class="flex items-center justify-center mb-6">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-latam-blue via-latam-purple to-latam-pink flex items-center justify-center shadow-lg shadow-latam-purple/20">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </div>
+            </div>
+            
+            <h2 class="text-xl font-bold text-white text-center mb-2 tracking-wide">Bem-vindo ao Acervo</h2>
+            <p class="text-[11px] uppercase tracking-wider text-gray-400 text-center mb-8 font-semibold">Selecione a sua oficina para carregar o inventário correspondente.</p>
+            
+            <div class="relative mb-6">
+                <select x-model="tempWorkshop" class="w-full appearance-none bg-latam-surface border-2 border-latam-border hover:border-latam-purple text-white rounded-2xl py-4 px-5 pr-10 focus:outline-none focus:border-latam-pink transition-colors cursor-pointer font-bold uppercase tracking-wider text-[11px]">
+                    <option value="" disabled selected>Selecione no menu (Seta)...</option>
+                    <template x-for="(config, chave) in oficinasDisponiveis" :key="chave">
+                        <option :value="chave" x-text="config.nome"></option>
+                    </template>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-gray-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+            </div>
+            
+            <button @click="confirmWorkshopSelection()" :disabled="!tempWorkshop" :class="!tempWorkshop ? 'bg-latam-surface text-gray-500 cursor-not-allowed border-transparent' : 'bg-latam-pink text-white hover:bg-pink-600 shadow-[0_0_15px_rgba(227,0,79,0.4)]'" class="w-full py-4 rounded-2xl font-bold uppercase tracking-widest text-[11px] transition-all duration-300">
+                Acessar Estoque Digital
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== Header Fixo estilo App ==================== -->
+    <header class="glass-panel sticky top-0 z-40 border-b border-latam-border" x-show="!isSelectingWorkshop">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-latam-blue via-latam-purple to-latam-pink flex items-center justify-center shadow-lg shadow-latam-purple/20">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 </div>
-                <div>
-                    <h1 class="text-xl font-bold text-white tracking-wide">Acervo de Ferramentas</h1>
-                    <p class="text-[10px] uppercase tracking-widest text-gray-400 font-semibold bg-clip-text text-transparent bg-gradient-to-r from-latam-purple to-latam-pink">Gestão de Inventário</p>
+                <div class="flex flex-col justify-center">
+                    <h1 class="text-xl font-bold text-white tracking-wide leading-tight">Acervo de Ferramentas</h1>
+                    
+                    <!-- NOVO: Subtítulo integrado com Oficina Ativa e Botão de Alterar -->
+                    <div class="flex items-center flex-wrap gap-1.5 mt-0.5">
+                        <p class="text-[9px] uppercase tracking-widest text-gray-400 font-semibold bg-clip-text text-transparent bg-gradient-to-r from-latam-purple to-latam-pink">Gestão de Inventário</p>
+                        <span class="text-gray-600 text-[10px] hidden sm:inline">•</span>
+                        <span class="text-[9px] text-blue-300 font-bold uppercase tracking-widest" x-text="oficinaNome"></span>
+                        <button @click="changeWorkshop()" class="text-[8px] bg-latam-surface border border-latam-border hover:border-latam-pink text-gray-400 hover:text-white px-2 py-0.5 rounded transition-colors uppercase tracking-widest font-black ml-1">Alterar</button>
+                    </div>
                 </div>
             </div>
             
@@ -103,7 +143,7 @@
         </div>
     </header>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow" x-show="!isSelectingWorkshop">
         
         <!-- Breadcrumbs Estilo Pills -->
         <div x-cloak x-show="!isLoading && !isSearching" class="mb-6 flex items-center space-x-1 overflow-x-auto pb-2 scrollbar-hide text-xs font-semibold uppercase tracking-wider">
@@ -153,7 +193,7 @@
                             <span class="hidden sm:inline">Kit Importado:</span> <span class="font-bold text-blue-300" x-text="importedKitData.titulo || 'Customizado'"></span>
                         </span>
                         
-                        <!-- NOVO: Botão para Editar o Kit Importado -->
+                        <!-- Botão para Editar o Kit Importado -->
                         <button @click="editImportedKit()" 
                                 x-show="!builderMode" 
                                 class="bg-latam-pink hover:bg-pink-600 text-white px-3 py-1.5 rounded-full text-[9px] uppercase font-bold tracking-widest transition-colors shadow-md flex items-center gap-1.5">
@@ -293,7 +333,7 @@
                     <!-- Localização e Botão Builder -->
                     <div class="sm:text-right flex flex-col sm:items-end justify-center py-1 border-t sm:border-t-0 border-latam-border mt-2 sm:mt-0 pt-3 sm:pt-0 gap-2">
                         
-                        <!-- Botão Adicionar ao Kit (Aparece apenas no Modo Construtor) -->
+                        <!-- Botão Adicionar ao Kit -->
                         <template x-if="builderMode">
                             <button @click.stop="toggleToolInKit(tool)" 
                                     :class="isToolInKit(tool) ? 'bg-latam-pink text-white border-latam-pink' : 'bg-transparent text-gray-400 border-gray-600 hover:border-latam-pink hover:text-latam-pink'"
@@ -324,7 +364,7 @@
     </div>
 
     <!-- Barra Flutuante Inferior (Apenas Modo Construtor) -->
-    <div x-cloak x-show="builderMode" class="fixed bottom-0 left-0 right-0 z-50 p-4 animate-slide-up">
+    <div x-cloak x-show="builderMode && !isSelectingWorkshop" class="fixed bottom-0 left-0 right-0 z-50 p-4 animate-slide-up">
         <div class="max-w-4xl mx-auto glass-panel bg-latam-bg/95 border-t border-x border-latam-border rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] p-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
                 <h3 class="text-white font-bold text-lg">Kit em Construção</h3>
@@ -360,10 +400,41 @@
     </div>
 
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('setupApp', () => ({
+        // Mapeamento Centralizado de Oficinas e Planilhas CSV (Padrão para todo o ecossistema)
+        const OFICINAS_CONFIG = {
+            'rodas_freios': {
+                nome: 'Rodas e Freios',
+                csv: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRHBw7M7f58VdQOb22lLEl6759ApiWB0fFHdqU1I8p45seWfxR7C-_X5tBGmTw4-ErnJaurfch2v3Bw/pub?gid=1418929880&single=true&output=csv'
+            },
+            'hidraulica': {
+                nome: 'Oficina de Hidráulica',
+                csv: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRKxrU_Ad-Q7AU5lmN_fkBKAXCHwiNHuJDpu_gPljeSalI0fMjPoTbHPq3wq2deelscZqRFHxmgzh1p/pub?output=csv'
+            },
+            'pneumatica': {
+                nome: 'Oficina de Pneumática',
+                csv: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR9n_3ZU0DYq9UvTzaKBFoTwLcwmtCvOoohB6QN360TQhjNAaVAz4wVazdvMj7RbRHBjk9qhSvvIjS1/pub?output=csv'
+            },
+            'eletronica': {
+                nome: 'Oficina de Eletrônica',
+                csv: ''
+            },
+            'estruturas': {
+                nome: 'Hangar / Estruturas',
+                csv: ''
+            }
+        };
+
+        function setupApp() {
+            return {
+                // Estado da Inicialização e Múltiplas Oficinas
+                isSelectingWorkshop: false,
+                oficinasDisponiveis: OFICINAS_CONFIG,
+                oficinaSelecionada: '',
+                oficinaNome: '',
+                tempWorkshop: '', // Variável para segurar a escolha no Dropdown
+
                 toolsList: [],
-                isLoading: true,
+                isLoading: false,
                 searchQuery: '',
                 level: 0,
                 selectedCat: null,
@@ -371,7 +442,6 @@
                 selectedSub: null,
                 activeCheck: null,
 
-                // Variáveis do Modo Construtor e Importador
                 builderMode: false,
                 customKit: [],
                 importedKitData: null,
@@ -381,7 +451,73 @@
                 activeImgName: '',
 
                 async init() {
-                    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRHBw7M7f58VdQOb22lLEl6759ApiWB0fFHdqU1I8p45seWfxR7C-_X5tBGmTw4-ErnJaurfch2v3Bw/pub?gid=1418929880&single=true&output=csv';
+                    // 1. Verifica parâmetro na URL (?oficina=xxx)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    let oUrl = urlParams.get('oficina');
+                    
+                    // 2. Verifica localStorage para lembrar a escolha anterior
+                    let oLocal = localStorage.getItem('acervo_oficina_selecionada');
+                    
+                    let oficinaParaCarregar = '';
+                    if (oUrl && this.oficinasDisponiveis[oUrl]) {
+                        oficinaParaCarregar = oUrl;
+                    } else if (oLocal && this.oficinasDisponiveis[oLocal]) {
+                        oficinaParaCarregar = oLocal;
+                    }
+
+                    if (oficinaParaCarregar) {
+                        this.oficinaSelecionada = oficinaParaCarregar;
+                        this.oficinaNome = this.oficinasDisponiveis[oficinaParaCarregar].nome;
+                        this.tempWorkshop = oficinaParaCarregar;
+                        this.loadDatabase();
+                    } else {
+                        // Nenhuma oficina lembrada: Exibe tela de onboarding
+                        this.isLoading = false;
+                        this.isSelectingWorkshop = true;
+                    }
+                },
+
+                changeWorkshop() {
+                    this.isSelectingWorkshop = true;
+                    this.tempWorkshop = this.oficinaSelecionada; // Pré-seleciona a atual
+                },
+
+                confirmWorkshopSelection() {
+                    if (!this.tempWorkshop) return;
+                    
+                    this.oficinaSelecionada = this.tempWorkshop;
+                    this.oficinaNome = this.oficinasDisponiveis[this.tempWorkshop].nome;
+                    
+                    // Salva a preferência
+                    localStorage.setItem('acervo_oficina_selecionada', this.oficinaSelecionada);
+                    
+                    // Oculta a tela e reseta as navegações
+                    this.isSelectingWorkshop = false;
+                    this.searchQuery = ''; 
+                    this.level = 0;
+                    this.selectedCat = null;
+                    this.selectedLoc = null;
+                    this.selectedSub = null;
+                    this.activeCheck = null;
+                    this.customKit = [];
+                    this.builderMode = false;
+                    
+                    this.loadDatabase();
+                },
+
+                async loadDatabase() {
+                    this.isLoading = true;
+                    this.toolsList = []; // Limpa o acervo anterior
+                    
+                    let config = this.oficinasDisponiveis[this.oficinaSelecionada];
+                    let csvUrl = config.csv;
+
+                    // Fallback para oficina sem planilha cadastrada
+                    if (!csvUrl) {
+                        alert(`A equipe de ${config.nome} ainda não cadastrou o link da sua planilha. Carregando planilha padrão de teste (Rodas e Freios)...`);
+                        csvUrl = this.oficinasDisponiveis['rodas_freios'].csv;
+                    }
+
                     try {
                         const response = await fetch(csvUrl);
                         if (!response.ok) throw new Error("Erro de rede ao carregar a planilha.");
@@ -389,6 +525,7 @@
                         this.parsePlanilha(csvText);
                     } catch (erro) {
                         console.error("Erro:", erro);
+                        alert("Não foi possível carregar o Acervo desta oficina. Verifique se o link da planilha está correto e publicado.");
                     } finally {
                         this.isLoading = false;
                     }
@@ -433,7 +570,7 @@
                     this.selectedLoc = loc;
                     this.selectedSub = sub;
                     this.activeCheck = null;
-                    this.importedKitData = null; // Reseta o modo de importação se navegar fisicamente
+                    this.importedKitData = null; 
                 },
 
                 goToCheck(checkName) {
@@ -453,7 +590,6 @@
                     this.isModalOpen = false;
                 },
 
-                // ====== LÓGICA DO CONSTRUTOR DE KITS ======
                 toggleBuilderMode() {
                     this.builderMode = !this.builderMode;
                     if(!this.builderMode) this.customKit = []; 
@@ -497,7 +633,6 @@
                     this.toggleBuilderMode();
                 },
 
-                // ====== LÓGICA DE IMPORTAÇÃO E EDIÇÃO DE KITS ======
                 loadImportedKit(event) {
                     const file = event.target.files[0];
                     if (!file) return;
@@ -519,14 +654,12 @@
                         } catch (error) {
                             alert("Erro: O arquivo não parece ser um kit válido do sistema.");
                         }
-                        event.target.value = ''; // Reseta o input de arquivo
+                        event.target.value = ''; 
                     };
                     reader.readAsText(file);
                 },
 
-                // NOVO: Função que copia as ferramentas do Kit JSON para o Carrinho de Edição
                 editImportedKit() {
-                    // Clona as ferramentas mapeadas para dentro do modo construtor
                     this.customKit = [...this.toolsInImportedKit];
                     this.builderMode = true;
                 },
@@ -546,15 +679,13 @@
                     if (!this.activeCheck) return [];
                     return this.toolsList.filter(t => t.checks.includes(this.activeCheck));
                 },
-                
-                // Mapeia o JSON carregado de volta para as ferramentas reais do banco (para pegar fotos e links atuais)
                 get toolsInImportedKit() {
                     if (!this.importedKitData) return [];
                     const pns = this.importedKitData.ferramentas.map(f => f.pn);
                     return this.toolsList.filter(t => pns.includes(t.code));
                 }
-            }));
-        });
+            }
+        }
     </script>
 </body>
 </html>
